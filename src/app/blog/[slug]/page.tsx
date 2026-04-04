@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { buscarPostPorSlug } from "@/servicos/blog";
 import BlogDetalhePagina from "@/paginas/blog/[slug]/index";
 
+export const dynamic = "force-dynamic";
+
 type PageProps = {
   params: Promise<{
     slug: string;

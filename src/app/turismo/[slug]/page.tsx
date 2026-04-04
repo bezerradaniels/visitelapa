@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { buscarTurismoPorSlug } from "@/servicos/turismo";
 import TurismoDetalhePagina from "@/paginas/turismo/[slug]/index";
 
+export const dynamic = "force-dynamic";
+
 type PageProps = {
   params: Promise<{
     slug: string;

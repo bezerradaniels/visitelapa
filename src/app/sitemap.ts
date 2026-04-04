@@ -9,15 +9,26 @@ import { listarBlog } from "@/servicos/blog";
 const BASE_URL = "https://visitelapa.com.br";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [negocios, hoteis, eventos, restaurantes, turismo, blog] =
-    await Promise.all([
-      listarNegocios(),
-      listarHoteis(),
-      listarEventos(),
-      listarRestaurantes(),
-      listarTurismo(),
-      listarBlog(),
-    ]);
+  let negocios: { slug: string }[] = [];
+  let hoteis: { slug: string }[] = [];
+  let eventos: { slug: string }[] = [];
+  let restaurantes: { slug: string }[] = [];
+  let turismo: { slug: string }[] = [];
+  let blog: { slug: string }[] = [];
+
+  try {
+    [negocios, hoteis, eventos, restaurantes, turismo, blog] =
+      await Promise.all([
+        listarNegocios(),
+        listarHoteis(),
+        listarEventos(),
+        listarRestaurantes(),
+        listarTurismo(),
+        listarBlog(),
+      ]);
+  } catch {
+    // Supabase not available during build — return only static routes
+  }
 
   const staticRoutes: MetadataRoute.Sitemap = [
     { url: BASE_URL, lastModified: new Date(), changeFrequency: "daily", priority: 1 },

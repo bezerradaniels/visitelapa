@@ -2,6 +2,8 @@ import NegocioDetalhePagina from "@/paginas/negocios/[slug]/index";
 import { buscarNegocioPorUsername } from "@/servicos/negocios";
 import { notFound } from "next/navigation";
 
+export const dynamic = "force-dynamic";
+
 type PageProps = {
   params: Promise<{
     username: string;
