@@ -1,6 +1,7 @@
 "use client";
 
 import type { KeyboardEvent } from "react";
+import Link from "next/link";
 import { ArtificialIntelligence08Icon } from "@hugeicons/core-free-icons";
 import Icone from "@/componentes/ui/icone";
 import { useBuscaIA } from "./use-busca-ia";
@@ -10,7 +11,7 @@ type BuscaIAFormProps = {
 };
 
 export default function BuscaIAForm({ sugestoes }: BuscaIAFormProps) {
-  const { pergunta, setPergunta, carregando, buscar } = useBuscaIA();
+  const { pergunta, setPergunta, carregando, buscar, resultado } = useBuscaIA();
 
   function handleKeyDown(event: KeyboardEvent<HTMLInputElement>) {
     if (event.key === "Enter") {
@@ -62,6 +63,68 @@ export default function BuscaIAForm({ sugestoes }: BuscaIAFormProps) {
           </button>
         ))}
       </div>
+
+      {carregando ? (
+        <div
+          aria-live="polite"
+          className="mt-6 w-full max-w-3xl rounded-[32px] border border-white/25 bg-white/12 p-6 text-left text-white backdrop-blur"
+        >
+          <p className="text-sm font-semibold uppercase tracking-[0.24em] text-sky-100">
+            Agente Visite Lapa
+          </p>
+          <p className="mt-3 text-base leading-7 text-white/90">
+            Estou separando algumas publicações que combinam com o seu pedido.
+          </p>
+        </div>
+      ) : null}
+
+      {resultado ? (
+        <div
+          aria-live="polite"
+          className="mt-6 w-full max-w-3xl rounded-[32px] border border-white/25 bg-white/12 p-6 text-left text-white backdrop-blur"
+        >
+          <p className="text-sm font-semibold uppercase tracking-[0.24em] text-sky-100">
+            Agente Visite Lapa
+          </p>
+
+          <p className="mt-3 text-base leading-7 text-white/90">
+            {resultado.mensagem}
+          </p>
+
+          {resultado.sugestoes.length > 0 ? (
+            <div className="mt-5 grid gap-3">
+              {resultado.sugestoes.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className="rounded-[24px] border border-white/15 bg-white/10 px-4 py-4 transition hover:border-sky-200/60 hover:bg-white/16"
+                >
+                  <span className="inline-flex rounded-full bg-white/14 px-3 py-1 text-xs font-medium text-sky-100">
+                    {item.categoria}
+                  </span>
+
+                  <p className="mt-3 text-base font-semibold text-white">
+                    {item.titulo}
+                  </p>
+
+                  <p className="mt-2 text-sm leading-6 text-white/75">
+                    {item.descricao}
+                  </p>
+                </Link>
+              ))}
+            </div>
+          ) : null}
+
+          <div className="mt-5">
+            <Link
+              href={resultado.linkExplorar}
+              className="inline-flex items-center rounded-full bg-white px-5 py-3 text-sm font-semibold text-main transition hover:opacity-90"
+            >
+              {resultado.labelExplorar}
+            </Link>
+          </div>
+        </div>
+      ) : null}
     </>
   );
 }

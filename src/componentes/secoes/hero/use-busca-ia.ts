@@ -1,35 +1,46 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import type { BuscaIAResultado } from "@/tipos/busca-ia";
 
 export function useBuscaIA() {
   const [pergunta, setPergunta] = useState("");
   const [carregando, setCarregando] = useState(false);
-  const router = useRouter();
+  const [resultado, setResultado] = useState<BuscaIAResultado | null>(null);
 
   async function buscar(texto: string) {
     const termo = texto.trim();
     if (!termo) return;
 
     setCarregando(true);
+    setResultado(null);
     try {
       const res = await fetch("/api/busca-ia", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ pergunta: termo }),
       });
-      const { dominio, filtro } = await res.json();
-      const url = filtro && filtro !== "Todos"
-        ? `/${dominio}?filtro=${encodeURIComponent(filtro)}`
-        : `/${dominio}`;
-      router.push(url);
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.erro ?? "Falha ao buscar sugestões");
+      }
+
+      setResultado(data as BuscaIAResultado);
     } catch {
-      router.push("/negocios");
+      setResultado({
+        dominio: "negocios",
+        filtro: "Todos",
+        mensagem:
+          "Tive uma instabilidade rápida aqui, mas você ainda pode explorar alguns conteúdos do portal pelo link abaixo.",
+        labelExplorar: "Explorar conteúdos",
+        linkExplorar: "/negocios",
+        sugestoes: [],
+      });
     } finally {
       setCarregando(false);
     }
   }
 
-  return { pergunta, setPergunta, carregando, buscar };
+  return { pergunta, setPergunta, carregando, buscar, resultado };
 }
