@@ -21,6 +21,8 @@ import {
 import { FormFieldDefinition, FormValue, FormValues } from "@/tipos/plataforma";
 
 type FormularioAdminProps = {
+  modulo?: string;
+  registroId?: string;
   fields: FormFieldDefinition[];
   initialValues?: FormValues;
   submitLabel: string;
@@ -38,6 +40,8 @@ function groupFieldsBySection(fields: FormFieldDefinition[]) {
 }
 
 export default function FormularioAdmin({
+  modulo,
+  registroId,
   fields,
   initialValues,
   submitLabel,
@@ -51,6 +55,7 @@ export default function FormularioAdmin({
   );
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submittedValues, setSubmittedValues] = useState<FormValues | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const sections = groupFieldsBySection(fields);
 
@@ -132,8 +137,39 @@ export default function FormularioAdmin({
     }
 
     startTransition(() => {
-      setErrors({});
-      setSubmittedValues(values);
+      void (async () => {
+        setErrors({});
+        setSubmitError(null);
+
+        if (variant !== "dashboard" || !modulo) {
+          setSubmittedValues(values);
+          return;
+        }
+
+        try {
+          const response = await fetch(`/api/dashboard/${modulo}`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              slug: registroId,
+              values,
+            }),
+          });
+
+          const data = await response.json();
+
+          if (!response.ok) {
+            setSubmitError(data.erro ?? "Não foi possível salvar no Supabase.");
+            return;
+          }
+
+          setSubmittedValues(values);
+        } catch {
+          setSubmitError("Não foi possível conectar ao endpoint de persistência.");
+        }
+      })();
     });
   }
 
@@ -152,6 +188,13 @@ export default function FormularioAdmin({
         >
           <p className="text-lg font-semibold">{successTitle}</p>
           <p className="mt-2 text-sm leading-6">{successDescription}</p>
+        </div>
+      ) : null}
+
+      {submitError ? (
+        <div className="rounded-4xl border border-rose-200 bg-rose-50 px-6 py-5 text-rose-900">
+          <p className="text-lg font-semibold">Não foi possível salvar</p>
+          <p className="mt-2 text-sm leading-6">{submitError}</p>
         </div>
       ) : null}
 

@@ -98,6 +98,8 @@ export default async function EdicaoModuloPagina({
       >
         <FormularioAdmin
           key={`${modulo}-${slug ?? "novo"}`}
+          modulo={modulo}
+          registroId={slug}
           fields={campos}
           initialValues={valores}
           submitLabel={
@@ -111,15 +113,15 @@ export default async function EdicaoModuloPagina({
             modulo === "contatos"
               ? "Contato atualizado"
               : isNew
-                ? "Registro preparado"
-                : "Alterações preparadas"
+                ? "Registro salvo"
+                : "Alterações salvas"
           }
           successDescription={
             modulo === "contatos"
-              ? "O módulo de contatos agora já permite visualização detalhada e atualização de status no dashboard."
+              ? "As informações do contato foram atualizadas no Supabase com sucesso."
               : isNew
-              ? "A interface de criação já está pronta para receber persistência real na etapa final de banco."
-              : "A interface de edição já valida campos, reaproveita componentes e prepara o fluxo administrativo completo."
+              ? "O novo registro foi enviado ao Supabase com sucesso."
+              : "As alterações deste registro foram persistidas no Supabase."
           }
           currentUsername={
             typeof valores.username === "string" ? valores.username : undefined

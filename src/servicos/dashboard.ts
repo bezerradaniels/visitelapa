@@ -344,23 +344,61 @@ export async function listarLinhasModulo(modulo: DashboardModuloId) {
         href: `/dashboard/tags/${item.slug}`,
       }));
     case "cidades":
-      return cidadesDashboard.map((item) => ({
-        id: item.slug,
-        titulo: item.titulo,
-        categoria: item.categoria ?? "Cidade",
-        status: item.status,
-        atualizado: item.atualizadoEm,
-        href: `/dashboard/cidades/${item.slug}`,
-      }));
+      try {
+        const { supabase } = await import("@/lib/supabase");
+        const { data, error } = await supabase
+          .from("cidades")
+          .select("slug, nome, status, updated_at")
+          .order("ordem", { ascending: true })
+          .order("nome", { ascending: true });
+        if (error) throw error;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        return (data ?? []).map((row: any) => ({
+          id: row.slug,
+          titulo: row.nome,
+          categoria: "Cidade",
+          status: row.status ?? "publicado",
+          atualizado: row.updated_at ?? "",
+          href: `/dashboard/cidades/${row.slug}`,
+        }));
+      } catch {
+        return cidadesDashboard.map((item) => ({
+          id: item.slug,
+          titulo: item.titulo,
+          categoria: item.categoria ?? "Cidade",
+          status: item.status,
+          atualizado: item.atualizadoEm,
+          href: `/dashboard/cidades/${item.slug}`,
+        }));
+      }
     case "bairros":
-      return bairrosDashboard.map((item) => ({
-        id: item.slug,
-        titulo: item.titulo,
-        categoria: item.categoria ?? "Bairro",
-        status: item.status,
-        atualizado: item.atualizadoEm,
-        href: `/dashboard/bairros/${item.slug}`,
-      }));
+      try {
+        const { supabase } = await import("@/lib/supabase");
+        const { data, error } = await supabase
+          .from("bairros")
+          .select("slug, nome, status, updated_at, cidades(nome)")
+          .order("ordem", { ascending: true })
+          .order("nome", { ascending: true });
+        if (error) throw error;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        return (data ?? []).map((row: any) => ({
+          id: row.slug,
+          titulo: row.nome,
+          categoria: row.cidades?.nome ?? "Bairro",
+          status: row.status ?? "publicado",
+          atualizado: row.updated_at ?? "",
+          href: `/dashboard/bairros/${row.slug}`,
+        }));
+      } catch {
+        return bairrosDashboard.map((item) => ({
+          id: item.slug,
+          titulo: item.titulo,
+          categoria: item.categoria ?? "Bairro",
+          status: item.status,
+          atualizado: item.atualizadoEm,
+          href: `/dashboard/bairros/${item.slug}`,
+        }));
+      }
     case "contatos": {
       const { supabase } = await import("@/lib/supabase");
       const { data, error } = await supabase
@@ -440,6 +478,29 @@ export function obterCamposModulo(modulo: DashboardModuloId): FormFieldDefinitio
       return camposBasicosSimples("Conteúdo");
     case "categorias":
     case "tags":
+      return [
+        {
+          kind: "text",
+          name: "titulo",
+          label: "Nome",
+          section: "Cadastro",
+          required: true,
+        },
+        {
+          kind: "text",
+          name: "slug",
+          label: "Slug",
+          section: "Cadastro",
+          required: true,
+        },
+        {
+          kind: "textarea",
+          name: "descricao",
+          label: "Descrição",
+          section: "Cadastro",
+          rows: 3,
+        },
+      ];
     case "cidades":
     case "bairros":
       return [
@@ -463,6 +524,14 @@ export function obterCamposModulo(modulo: DashboardModuloId): FormFieldDefinitio
           label: "Descrição",
           section: "Cadastro",
           rows: 3,
+        },
+        {
+          kind: "number",
+          name: "ordem",
+          label: "Ordem",
+          section: "Cadastro",
+          min: 1,
+          step: 1,
         },
       ];
     case "contatos":
@@ -560,13 +629,31 @@ export async function obterValoresModulo(
     case "tags":
     case "cidades":
     case "bairros": {
+      if (modulo === "cidades" || modulo === "bairros") {
+        const { supabase } = await import("@/lib/supabase");
+        const tabela = modulo;
+        const { data: item } = await supabase
+          .from(tabela)
+          .select("nome, slug, descricao, ordem, status")
+          .eq("slug", slug)
+          .maybeSingle();
+
+        return criarValoresIniciais(campos, {
+          ...seedBase,
+          titulo: item?.nome ?? registro.titulo,
+          slug: item?.slug ?? registro.id,
+          descricao: item?.descricao ?? "",
+          ordem: item?.ordem ?? "",
+          publicado: item?.status === "publicado",
+          seoTitulo: item?.nome ?? registro.titulo,
+        });
+      }
+
       const colecao = {
         paginas: paginasDashboard,
         conteudos: conteudosDashboard,
         categorias: categoriasDashboard,
         tags: tagsDashboard,
-        cidades: cidadesDashboard,
-        bairros: bairrosDashboard,
       }[modulo];
 
       const item = colecao.find((entry) => entry.slug === slug);
