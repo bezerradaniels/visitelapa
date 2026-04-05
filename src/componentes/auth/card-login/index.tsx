@@ -6,36 +6,47 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import {
   LockPasswordIcon,
-  UserIcon,
+  Mail01Icon,
 } from "@hugeicons/core-free-icons";
 import Icone from "@/componentes/ui/icone";
-import {
-  obterCookieDashboardAdmin,
-  validarCredenciaisDashboardTemporarias,
-} from "@/servicos/admin-auth";
 import { assetsEstaticos } from "@/dados/assets";
 
 export default function CardLogin() {
   const router = useRouter();
-
-  const cookieConfig = obterCookieDashboardAdmin();
   const [isPending, startTransition] = useTransition();
-  const [identificador, setIdentificador] = useState("");
+  const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [erro, setErro] = useState<string | null>(null);
 
-  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (!validarCredenciaisDashboardTemporarias(identificador, senha)) {
-      setErro("Usuário ou senha inválidos para o acesso temporário.");
-      return;
-    }
-
     startTransition(() => {
-      document.cookie = `${cookieConfig.nome}=${cookieConfig.valorAutorizado}; path=/; max-age=${cookieConfig.duracaoSegundos}; SameSite=Lax`;
-      setErro(null);
-      router.push("/dashboard");
+      void (async () => {
+        try {
+          const response = await fetch("/api/auth/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              email: email.trim(),
+              senha,
+            }),
+          });
+
+          const data = await response.json();
+
+          if (!response.ok) {
+            setErro(data.erro ?? "Não foi possível entrar no painel.");
+            return;
+          }
+
+          setErro(null);
+          router.push("/dashboard");
+          router.refresh();
+        } catch {
+          setErro("Não foi possível conectar ao servidor de autenticação.");
+        }
+      })();
     });
   }
 
@@ -61,20 +72,20 @@ export default function CardLogin() {
       >
         <label className="flex flex-col gap-3">
           <span className="text-sm font-semibold text-main">
-            Login
+            E-mail
           </span>
           <div className="flex items-center gap-3 rounded-[32px] border border-slate-200 px-4 py-3">
             <Icone
-              icon={UserIcon}
+              icon={Mail01Icon}
               size={18}
               className="text-slate-500"
             />
             <input
-              type="text"
+              type="email"
               required
-              value={identificador}
-              onChange={(event) => setIdentificador(event.target.value)}
-              placeholder="admin ou admin@visitelapa.com.br"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              placeholder="seuemail@exemplo.com"
               className="w-full bg-transparent text-sm text-main outline-none placeholder:text-slate-400"
             />
           </div>
@@ -101,7 +112,7 @@ export default function CardLogin() {
 
         <button
           type="submit"
-          disabled={isPending}
+          disabled={isPending || !email.trim() || !senha}
           className="inline-flex w-full items-center justify-center gap-2 rounded-[32px] bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {isPending ? "Entrando..." : "Entrar"}
