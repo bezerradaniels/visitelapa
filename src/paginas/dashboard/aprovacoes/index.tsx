@@ -3,6 +3,41 @@ import ContainerConteudo from "@/componentes/dashboard/container-conteudo";
 import EstadoVazio from "@/componentes/dashboard/estado-vazio";
 import ListaModuloInterativa from "@/componentes/dashboard/lista-modulo-interativa";
 import { listarSolicitacoesPublicas } from "@/servicos/solicitacoes-publicas";
+import { AdminTableAction } from "@/tipos/plataforma";
+
+function montarAcoesSolicitacao(id: string, titulo: string, status: string): AdminTableAction[] {
+  const hrefDetalhe = `/dashboard/aprovacoes/${id}`;
+  const actionPath = `/api/dashboard/aprovacoes/${id}`;
+
+  return [
+    {
+      type: "view",
+      href: hrefDetalhe,
+    },
+    {
+      type: "edit",
+      href: `${hrefDetalhe}#formulario-solicitacao`,
+    },
+    ...(status !== "publicado"
+      ? [
+          {
+            type: "approve" as const,
+            actionPath,
+            confirmMessage: `Aprovar a solicitação "${titulo}"?`,
+          },
+        ]
+      : []),
+    ...(status !== "publicado" && status !== "rejeitado"
+      ? [
+          {
+            type: "reject" as const,
+            actionPath,
+            confirmMessage: `Reprovar a solicitação "${titulo}"?`,
+          },
+        ]
+      : []),
+  ];
+}
 
 export default async function AprovacoesDashboardPagina() {
   const solicitacoes = await listarSolicitacoesPublicas();
@@ -14,6 +49,7 @@ export default async function AprovacoesDashboardPagina() {
     status: item.status,
     atualizado: item.criadoEm,
     href: `/dashboard/aprovacoes/${item.id}`,
+    actions: montarAcoesSolicitacao(item.id, item.titulo, item.status),
   }));
 
   return (

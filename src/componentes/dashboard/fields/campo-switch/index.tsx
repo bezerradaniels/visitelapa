@@ -21,7 +21,7 @@ export default function CampoSwitch({
         id={field.name}
         type="button"
         onClick={() => onChange(field.name, !isChecked)}
-        className="flex items-center justify-between rounded-md border border-slate-200 bg-white px-4 py-3 text-left transition hover:border-slate-300"
+        className="flex cursor-pointer items-center justify-between rounded-md border border-slate-200 bg-white px-4 py-3 text-left transition hover:border-slate-300"
       >
         <span className="text-sm text-slate-600">
           {isChecked ? "Ativado" : "Desativado"}

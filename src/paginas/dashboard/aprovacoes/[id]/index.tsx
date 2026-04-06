@@ -160,17 +160,19 @@ export default function AprovacaoDetalhePagina({
           </>
         }
       >
-        <FormularioAdmin
-          key={solicitacao.id}
-          modulo={solicitacao.tipo}
-          fields={campos}
-          initialValues={solicitacao.payload}
-          submitLabel="Salvar ajustes"
-          successTitle="Ajustes salvos"
-          successDescription="As alterações foram registradas nesta solicitação e já podem ser usadas na etapa de aprovação."
-          submitPath={`/api/dashboard/aprovacoes/${solicitacao.id}`}
-          submitBody={{ action: "salvar" }}
-        />
+        <div id="formulario-solicitacao">
+          <FormularioAdmin
+            key={solicitacao.id}
+            modulo={solicitacao.tipo}
+            fields={campos}
+            initialValues={solicitacao.payload}
+            submitLabel="Salvar ajustes"
+            successTitle="Ajustes salvos"
+            successDescription="As alterações foram registradas nesta solicitação e já podem ser usadas na etapa de aprovação."
+            submitPath={`/api/dashboard/aprovacoes/${solicitacao.id}`}
+            submitBody={{ action: "salvar" }}
+          />
+        </div>
       </LayoutEdicao>
     </ContainerConteudo>
   );

@@ -167,7 +167,7 @@ export default function AcoesEditoriais({
             type="button"
             onClick={() => executarAcao(acao)}
             disabled={isPending}
-            className={`w-full rounded-[32px] px-4 py-3 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 ${acao.className}`}
+            className={`w-full rounded-[32px] px-4 py-3 text-sm font-semibold transition cursor-pointer disabled:cursor-not-allowed disabled:opacity-60 ${acao.className}`}
           >
             {isPending ? "Processando..." : acao.label}
           </button>

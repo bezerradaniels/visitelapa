@@ -64,7 +64,7 @@ export default function CadastrarConteudoPagina() {
                 <Link
                   key={tipo.id}
                   href={tipo.href}
-                  className="inline-flex items-center gap-3 rounded-[32px] border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-main transition hover:-translate-y-0.5 hover:border-slate-300 hover:bg-slate-50 hover:"
+                  className="inline-flex items-center gap-3 rounded-[32px] border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-main transition hover:-translate-y-0.5 hover:border-slate-300 hover:bg-slate-50"
                 >
                   <span className="rounded-2xl bg-slate-100 p-2 text-slate-700">
                     <Icone

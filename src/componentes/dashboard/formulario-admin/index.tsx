@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import CampoCheckbox from "@/componentes/dashboard/fields/campo-checkbox";
 import CampoCheckboxGrupo from "@/componentes/dashboard/fields/campo-checkbox-grupo";
@@ -38,6 +39,7 @@ type FormularioAdminProps = {
   currentUsername?: string;
   submitPath?: string;
   submitBody?: Record<string, unknown>;
+  successRedirectHref?: string;
 };
 
 function groupFieldsBySection(fields: FormFieldDefinition[]) {
@@ -171,7 +173,9 @@ export default function FormularioAdmin({
   currentUsername,
   submitPath,
   submitBody,
+  successRedirectHref,
 }: FormularioAdminProps) {
+  const router = useRouter();
   const [values, setValues] = useState<FormValues>(() =>
     criarValoresIniciais(fields, initialValues)
   );
@@ -394,6 +398,11 @@ export default function FormularioAdmin({
         setSubmitError(null);
 
         if (!submitPath && (variant !== "dashboard" || !modulo)) {
+          if (successRedirectHref) {
+            router.push(successRedirectHref);
+            return;
+          }
+
           setSubmittedValues(valoresNormalizados);
           return;
         }
@@ -418,6 +427,11 @@ export default function FormularioAdmin({
               return;
             }
 
+            if (successRedirectHref) {
+              router.push(successRedirectHref);
+              return;
+            }
+
             setSubmittedValues(valoresNormalizados);
             return;
           }
@@ -436,6 +450,11 @@ export default function FormularioAdmin({
 
           if (!response.ok) {
             setSubmitError(data.erro ?? "Não foi possível salvar no Supabase.");
+            return;
+          }
+
+          if (successRedirectHref) {
+            router.push(successRedirectHref);
             return;
           }
 
@@ -561,7 +580,7 @@ export default function FormularioAdmin({
         <button
           type="submit"
           disabled={isPending}
-          className="inline-flex min-w-44 items-center justify-center rounded-md bg-teal-500 px-5 py-3 text-sm font-semibold text-white transition hover:bg-teal-600 disabled:cursor-not-allowed disabled:opacity-60"
+          className="inline-flex min-w-44 cursor-pointer items-center justify-center rounded-md bg-teal-500 px-5 py-3 text-sm font-semibold text-white transition hover:bg-teal-600 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {isPending ? "Salvando..." : submitLabel}
         </button>

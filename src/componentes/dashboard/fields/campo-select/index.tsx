@@ -72,7 +72,7 @@ export default function CampoSelect({
                 key={`${field.name}-${action.label}`}
                 type="button"
                 onClick={() => aplicarQuickAction(action)}
-                className="text-left font-semibold text-sky-700 underline underline-offset-4 transition hover:text-sky-900"
+                className="cursor-pointer text-left font-semibold text-sky-700 underline underline-offset-4 transition hover:text-sky-900"
               >
                 {action.label}
               </button>

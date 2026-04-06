@@ -19,8 +19,8 @@ export default function BarraFiltros({ filtros, onFiltroClick }: BarraFiltrosPro
             onClick={() => onFiltroClick?.(filtro.label)}
             className={
               filtro.ativo
-                ? "rounded-full bg-main px-4 py-2 text-sm font-medium text-white transition"
-                : "rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:border-gray-300 hover:bg-gray-50"
+                ? "rounded-full bg-main px-4 py-2 text-sm font-medium text-white transition cursor-pointer"
+                : "rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition cursor-pointer hover:border-gray-300 hover:bg-gray-50"
             }
           >
             {filtro.label}

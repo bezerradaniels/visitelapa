@@ -12,7 +12,7 @@ export default function Paginacao({ paginaAtual, totalPaginas, onAnterior, onPro
         type="button"
         onClick={onAnterior}
         disabled={paginaAtual === 1}
-        className="rounded-full border border-gray-200 bg-white px-5 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
+        className="rounded-full border border-gray-200 bg-white px-5 py-2 text-sm font-medium text-gray-700 transition cursor-pointer hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
       >
         ← Anterior
       </button>
@@ -26,7 +26,7 @@ export default function Paginacao({ paginaAtual, totalPaginas, onAnterior, onPro
         type="button"
         onClick={onProxima}
         disabled={paginaAtual === totalPaginas}
-        className="rounded-full border border-gray-200 bg-white px-5 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
+        className="rounded-full border border-gray-200 bg-white px-5 py-2 text-sm font-medium text-gray-700 transition cursor-pointer hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
       >
         Próxima →
       </button>

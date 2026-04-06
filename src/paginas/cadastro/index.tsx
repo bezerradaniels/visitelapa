@@ -44,7 +44,7 @@ export default function CadastroPagina() {
             <Link
               key={tipo.id}
               href={tipo.href}
-              className="group rounded-4xl border border-slate-200 bg-white p-6 transition hover:-translate-y-1 hover:border-slate-300 hover:"
+              className="group rounded-4xl border border-slate-200 bg-white p-6 transition hover:-translate-y-1 hover:border-slate-300"
             >
               <div className="flex items-start justify-between gap-4">
                 <div className="rounded-[32px] bg-slate-100 p-3 text-slate-700">

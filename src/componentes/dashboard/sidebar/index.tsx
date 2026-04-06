@@ -177,7 +177,7 @@ export default function Sidebar({
           <button
             type="button"
             onClick={alternarTodasAsSecoes}
-            className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-slate-800 text-slate-300 transition hover:border-slate-700 hover:text-white"
+            className="inline-flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-full border border-slate-800 text-slate-300 transition hover:border-slate-700 hover:text-white"
             aria-label={todasColapsadas ? "Expandir seções do menu" : "Colapsar seções do menu"}
             title={todasColapsadas ? "Expandir seções" : "Colapsar seções"}
           >
@@ -201,7 +201,7 @@ export default function Sidebar({
                     <button
                       type="button"
                       onClick={alternarAcoesCadastros}
-                      className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-slate-800 text-slate-300 transition hover:border-slate-700 hover:text-white"
+                      className="inline-flex h-7 w-7 cursor-pointer items-center justify-center rounded-full border border-slate-800 text-slate-300 transition hover:border-slate-700 hover:text-white"
                       aria-label={
                         cadastrosAcoesAbertas
                           ? "Fechar ações rápidas de cadastros"
@@ -220,7 +220,7 @@ export default function Sidebar({
                 <button
                   type="button"
                   onClick={() => alternarSecao(grupo.titulo)}
-                  className="inline-flex h-8 w-8 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-900 hover:text-white"
+                  className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-900 hover:text-white"
                   aria-label={
                     secoesAbertas[grupo.titulo]
                       ? `Colapsar seção ${grupo.titulo}`

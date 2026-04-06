@@ -53,7 +53,11 @@ export default function ListaModuloInterativa({
   const deferredQuery = useDeferredValue(query);
 
   const statusOptions = Array.from(
-    new Set(rows.map((row) => row.status).filter(Boolean))
+    new Set(
+      rows
+        .map((row) => (typeof row.status === "string" ? row.status : ""))
+        .filter(Boolean)
+    )
   );
 
   const filteredRows = rows.filter((row) => {

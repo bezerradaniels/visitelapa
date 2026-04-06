@@ -111,9 +111,24 @@ export type AdminTableColumn = {
   label: string;
 };
 
-export type AdminTableRow = Record<string, string> & {
+export type AdminTableAction =
+  | {
+      type: "view" | "edit";
+      href: string;
+      label?: string;
+    }
+  | {
+      type: "approve" | "reject";
+      actionPath: string;
+      label?: string;
+      confirmMessage?: string;
+    };
+
+export type AdminTableRow = {
   id: string;
   href?: string;
+  actions?: AdminTableAction[];
+  [key: string]: string | AdminTableAction[] | undefined;
 };
 
 export type DashboardModuleConfig = {

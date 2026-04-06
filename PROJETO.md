@@ -1,30 +1,43 @@
 # Visite Lapa — Guia de Desenvolvimento
 
 > Documento vivo. Atualizar após cada etapa concluída.
-> Última atualização: 2026-04-04
+> Última atualização: 2026-04-06
 
 ---
 
 ## Visão Geral
 
 Plataforma de guia local para **Bom Jesus da Lapa, BA**.
-Cobre 6 domínios: `negocios`, `hoteis`, `restaurantes`, `turismo`, `eventos`, `blog`.
+Cobre hoje os domínios públicos `negocios`, `hoteis`, `restaurantes`, `eventos` e `blog`, além das áreas de `contato`, `cadastro`, `cadastrar-conteudo`, `login` e `obrigado`.
 
-**Stack:** Next.js (App Router) · TypeScript · Tailwind CSS
+**Stack atual:** Next.js (App Router) · TypeScript · Tailwind CSS · Supabase · Hugeicons · Tiptap
+
+## Estado Atual Real
+
+- O portal público consome dados reais via Supabase.
+- O dashboard administrativo já está ativo para módulos editoriais, cadastros, categorias, contatos e fila de aprovação.
+- As solicitações públicas cobrem `pacotes`, `eventos`, `hoteis`, `negocios` e `restaurantes`.
+- O domínio `turismo` não faz mais parte do fluxo atual do produto; referências restantes em documentação antiga devem ser tratadas como legado.
+- O build do projeto está saudável; a principal pendência de higiene hoje está na documentação desatualizada e em alguns artefatos auxiliares do repositório.
 
 ---
 
 ## Arquitetura
 
 ```
-UI (paginas + componentes)
+UI (app/ + paginas/ + componentes/)
         ↓
-Camada de Serviços (servicos/)
+Camada de Serviços / Queries (servicos/)
         ↓
-Camada de Dados (dados/ → futuro: Supabase)
+Supabase
+
+Suporte:
+- dados/ → tipos, assets e configurações estáticas
+- tipos/ → contratos compartilhados
+- lib/ → clientes do Supabase
 ```
 
-A separação existe para que a migração para banco de dados real altere **apenas** a camada de serviços, sem tocar na UI.
+A separação continua importante para concentrar consultas, normalização de payload e regras editoriais na camada de serviços, reduzindo o acoplamento da UI com o banco.
 
 ---
 
@@ -33,60 +46,163 @@ A separação existe para que a migração para banco de dados real altere **ape
 ```
 src/
   app/
-    [dominio]/
-      page.tsx              ← shell de roteamento (só importa de paginas/)
-      [slug]/
-        page.tsx            ← resolve params (Promise) e delega para paginas/
+    (site)/
+      page.tsx              ← home pública
+      [dominio]/
+        page.tsx            ← shell de roteamento
+        [slug]/
+          page.tsx          ← detalhe público
+      contato/
+      cadastro/
+      cadastrar-conteudo/
+      obrigado/
+    dashboard/
+      ...                   ← área administrativa
+    api/
+      ...                   ← rotas de autenticação, IA, dashboard e solicitações
 
   paginas/
+    home/
+    contato/
+    cadastro/
+    cadastrar-conteudo/
+    obrigado/
     [dominio]/
       index.tsx             ← UI da listagem
       [slug]/
-        index.tsx           ← UI do detalhe
+        index.tsx           ← UI do detalhe / formulário
 
   componentes/
-    cards/
-      card-listagem/        ← card genérico de listagem
-    filtros/
-      barra-filtros/        ← barra de filtros interativa
-    layouts/
-      layout-detalhe/       ← layout compartilhado das páginas de detalhe
-    listagem/
-      grade-cards/          ← grid wrapper dos cards
-    secoes/
-      hero/                 ← hero da home
-      hero-listagem/        ← hero das páginas de listagem
-      atalhos-portal/       ← atalhos da home
-      destaques-home/       ← seção de destaques da home
-      eventos-home/         ← seção de eventos da home
-      blog-home/            ← seção do blog da home
-      hoteis-home/          ← seção de hotéis da home
-      negocios-home/        ← seção de negócios da home
-      restaurantes-home/    ← seção de restaurantes da home
-      turismo-home/         ← seção de turismo da home
-    ui/
-      botao/
-      container/
-      social-buttons/
+    dashboard/             ← UI administrativa, formulários, tabela, sidebar
+    secoes/                ← home, heroes e vitrines públicas
+    listagem/              ← grade, paginação e filtros
+    cards/                 ← cards públicos
+    layouts/               ← layouts compartilhados
+    ui/                    ← container, ícones, busca e utilitários visuais
+    auth/
+    contato/
+    blog/
     header/
     footer/
 
   dados/
-    negocios.ts             ← tipo Negocio + filtrosNegocios + negocios[]
-    hoteis.ts               ← tipo Hotel + filtrosHoteis + hoteis[]
-    restaurantes.ts         ← tipo Restaurante + filtrosRestaurantes + restaurantes[]
-    turismo.ts              ← tipo RoteiroTuristico + filtrosTurismo + roteirosTuristicos[]
-    eventos.ts              ← tipo Evento + filtrosEventos + eventos[]
-    blog.ts                 ← tipo PostBlog + filtrosBlog + postsBlog[]
+    assets.ts              ← caminhos estáticos de imagens
+    portal.ts              ← config institucional do portal
+    *.ts                   ← hoje funcionam principalmente como definição de tipos
 
   servicos/
-    negocios.ts             ← listarNegocios, buscarNegocioPorSlug, listarFiltrosNegocios
-    hoteis.ts               ← listarHoteis, buscarHotelPorSlug, listarFiltrosHoteis
-    restaurantes.ts         ← listarRestaurantes, buscarRestaurantePorSlug, listarFiltrosRestaurantes
-    turismo.ts              ← listarTurismo, buscarTurismoPorSlug, listarFiltrosTurismo
-    eventos.ts              ← listarEventos, buscarEventoPorSlug, listarFiltrosEventos
-    blog.ts                 ← listarBlog, buscarPostPorSlug, listarFiltrosBlog
+    *.ts                   ← queries, mapeamento de payload, regras editoriais e integração com Supabase
 ```
+
+---
+
+## Varredura 2026-04-06
+
+### Build e higiene atual
+
+- `npm run build`: ok
+- `npm run lint`: falha apenas por artefatos auxiliares e por um warning de fonte
+- O warning de fonte hoje aponta para `src/app/layout.tsx`, onde a `Google Sans` é carregada manualmente por `<link>`
+
+### Arquivos e pastas que podem ser excluídos sem afetar o runtime
+
+**Seguros para excluir imediatamente**
+
+- `.next/`
+  - pasta gerada de build/cache; no momento está ocupando cerca de **894 MB**
+- `public/imagens/.DS_Store`
+- `public/imagens/logos/.DS_Store`
+- `check.js`
+  - script experimental sem referência no projeto; hoje só adiciona erro de lint
+- `test-font.js`
+  - script experimental sem referência no projeto; hoje só adiciona erro de lint
+
+**Seguros para excluir do runtime, mas opcionais como documentação/local**
+
+- `LINKS_ACESSIVEIS_DO_SITE.md`
+  - não participa da aplicação e está desatualizado, inclusive com rotas de `turismo`
+- `public/imagens/README.md`
+  - documentação local de assets, sem impacto em build ou runtime
+- `.vscode/settings.json`
+  - configuração local de editor; hoje ainda aponta `deno.enablePaths` para `supabase/functions`, que já não existe mais
+- `.vscode/mcp.json`
+  - configuração local de desenvolvimento; não impacta o site publicado
+
+### Oportunidades de limpeza de código
+
+1. Remover referências legadas a `turismo` da documentação
+   - `PROJETO.md` antigo e `LINKS_ACESSIVEIS_DO_SITE.md` ainda citam domínios, rotas e telas que não existem mais
+
+2. Remover exports vazios legados em `src/dados/*.ts`
+   - arquivos como `src/dados/negocios.ts`, `src/dados/hoteis.ts`, `src/dados/restaurantes.ts`, `src/dados/eventos.ts` e `src/dados/blog.ts` mantêm arrays vazios exportados
+   - se a intenção atual é usar esses arquivos só para tipos, vale mover os tipos para `src/tipos/` e eliminar os arrays mortos
+
+3. Trocar `any` por tipos de linha do Supabase
+   - há vários `mapRow(row: any)` em `src/servicos/*.ts`
+   - isso enfraquece autocomplete, reduz segurança e mascara incompatibilidades de schema
+
+4. Reduzir `select("*")` em consultas de listagem
+   - hoje vários serviços puxam colunas demais para telas que usam só `slug`, `titulo`, `descricao`, `categoria`, `imagem` e poucos metadados
+   - isso vale especialmente para `negocios`, `hoteis`, `restaurantes`, `eventos`, `blog`, `solicitacoes-publicas` e partes do dashboard
+
+5. Eliminar buscas duplicadas nas páginas de detalhe
+   - as rotas em `src/app/(site)/*/[slug]/page.tsx` buscam o registro em `generateMetadata`
+   - a UI em `src/paginas/*/[slug]/index.tsx` busca o mesmo item novamente para renderizar
+   - no blog, além disso, a página ainda chama `listarBlog()` inteira para montar “Continue explorando”
+
+6. Consolidar componentes repetidos da home
+   - `eventos-home`, `hoteis-home`, `negocios-home`, `restaurantes-home` e `blog-home` repetem praticamente a mesma estrutura de seção e card
+   - um componente genérico de vitrine reduziria repetição e risco de inconsistência visual
+
+### Oportunidades para acelerar o site
+
+1. Remover `force-dynamic` das páginas públicas quando possível
+   - hoje há `force-dynamic` em:
+     - `src/app/(site)/negocios/[slug]/page.tsx`
+     - `src/app/(site)/hoteis/[slug]/page.tsx`
+     - `src/app/(site)/restaurantes/[slug]/page.tsx`
+     - `src/app/(site)/eventos/[slug]/page.tsx`
+     - `src/app/(site)/blog/[slug]/page.tsx`
+     - `src/app/(site)/[username]/page.tsx`
+   - isso impede cache/pre-render desnecessariamente em boa parte do portal
+   - a melhor saída é combinar `generateStaticParams` com `revalidate`
+
+2. Substituir o carregamento manual da fonte por `next/font`
+   - `src/app/layout.tsx` usa `<link>` para Google Fonts
+   - isso gera warning de lint e adiciona custo de rede/renderização
+   - `next/font` ou `localFont` melhora performance, reduz CLS e simplifica o layout
+
+3. Otimizar as queries da home
+   - a home chama serviços separados para cinco domínios e depois faz `.slice(0, 3)` no app
+   - hoje a aplicação busca listas completas e só usa 3 itens por seção
+   - ideal: criar queries de vitrine/resumo com `limit(3)` e colunas mínimas
+
+4. Otimizar a rota `/api/busca-ia`
+   - ela carrega datasets completos de `hoteis`, `restaurantes`, `negocios`, `eventos` e `blog` em toda requisição
+   - isso tende a ficar caro conforme o conteúdo cresce
+   - oportunidade: gerar um índice leve para busca, cachear resultado ou trabalhar com snapshots resumidos
+
+5. Otimizar o `sitemap`
+   - `src/app/sitemap.ts` carrega objetos completos e usa só `slug`
+   - vale criar queries específicas de slug para sitemap
+
+6. Parar de usar imagens de capa como `background-image` inline nas telas principais
+   - `HeroListagem` e `LayoutDetalhe` usam `backgroundImage` em estilo inline
+   - isso bypassa a otimização do `next/image`
+   - migrar para `Image` com `fill`, `sizes` e formatos mais leves tende a melhorar LCP
+
+7. Revisar assets mais pesados
+   - o arquivo mais pesado hoje é `public/imagens/img/restaurante-em-bom-jesus-da-lapa.jpeg` com cerca de **472 KB**
+   - comprimir/convertê-lo para WebP/AVIF traria ganho direto nas páginas que usam esse asset
+
+### Ordem sugerida de saneamento
+
+1. Excluir artefatos seguros (`.next`, `.DS_Store`, `check.js`, `test-font.js`)
+2. Atualizar docs legadas (`PROJETO.md`, `LINKS_ACESSIVEIS_DO_SITE.md`) para remover `turismo`
+3. Migrar fonte para `next/font`
+4. Criar queries leves para home, sitemap e busca IA
+5. Remover fetch duplicado de detalhe + metadata
+6. Revisar `force-dynamic` e introduzir cache/revalidate
 
 ---
 

@@ -28,6 +28,17 @@ body {
   color: var(--color-main);
 }
 
+button:not(:disabled),
+a[href],
+input[type="checkbox"]:not(:disabled) {
+  cursor: pointer;
+}
+
+button:disabled,
+input:disabled {
+  cursor: not-allowed;
+}
+
 .blog-rich img,
 .tiptap-rich-editor img {
   width: 100%;

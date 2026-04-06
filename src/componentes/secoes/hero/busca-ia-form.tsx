@@ -38,9 +38,10 @@ export default function BuscaIAForm({ sugestoes }: BuscaIAFormProps) {
             disabled={carregando}
           />
           <button
+            type="button"
             onClick={() => buscar(pergunta)}
             disabled={carregando || !pergunta.trim()}
-            className="inline-flex h-12 items-center gap-2 rounded-full bg-main px-6 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex h-12 cursor-pointer items-center gap-2 rounded-full bg-main px-6 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
           >
             <Icone
               icon={ArtificialIntelligence08Icon}
@@ -55,9 +56,10 @@ export default function BuscaIAForm({ sugestoes }: BuscaIAFormProps) {
         {sugestoes.map((sugestao) => (
           <button
             key={sugestao}
+            type="button"
             onClick={() => handleSugestao(sugestao)}
             disabled={carregando}
-            className="rounded-full border border-gray-200 bg-white px-4 py-2 text-sm text-main transition hover:border-blue hover:text-blue disabled:opacity-50"
+            className="rounded-full border border-gray-200 bg-white px-4 py-2 text-sm text-main transition cursor-pointer hover:border-blue hover:text-blue disabled:cursor-not-allowed disabled:opacity-50"
           >
             {sugestao}
           </button>

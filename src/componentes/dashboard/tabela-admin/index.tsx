@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { AdminTableColumn, AdminTableRow } from "@/tipos/plataforma";
+import AcoesTabela from "./acoes-tabela";
 
 type TabelaAdminProps = {
   columns: AdminTableColumn[];
@@ -53,6 +54,8 @@ function formatarStatus(status?: string) {
 }
 
 export default function TabelaAdmin({ columns, rows }: TabelaAdminProps) {
+  const hasActions = rows.some((row) => Array.isArray(row.actions) && row.actions.length > 0);
+
   return (
     <div className="overflow-hidden rounded-[2rem] border border-slate-200 bg-white">
       <div className="overflow-x-auto">
@@ -67,6 +70,11 @@ export default function TabelaAdmin({ columns, rows }: TabelaAdminProps) {
                   {column.label}
                 </th>
               ))}
+              {hasActions ? (
+                <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
+                  Ações
+                </th>
+              ) : null}
             </tr>
           </thead>
 
@@ -77,7 +85,8 @@ export default function TabelaAdmin({ columns, rows }: TabelaAdminProps) {
                 className="border-t border-slate-100"
               >
                 {columns.map((column) => {
-                  const rawValue = row[column.key] ?? "";
+                  const rawValue = row[column.key];
+                  const cellValue = typeof rawValue === "string" ? rawValue : "";
                   const isStatus = column.key === "status";
 
                   return (
@@ -90,20 +99,26 @@ export default function TabelaAdmin({ columns, rows }: TabelaAdminProps) {
                           href={row.href}
                           className="font-semibold text-slate-950 transition hover:text-slate-700"
                         >
-                          {rawValue}
+                          {cellValue}
                         </Link>
                       ) : isStatus ? (
                         <span
-                          className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${badgeClasses(rawValue)}`}
+                          className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${badgeClasses(cellValue)}`}
                         >
-                          {formatarStatus(rawValue)}
+                          {formatarStatus(cellValue)}
                         </span>
                       ) : (
-                        rawValue
+                        cellValue
                       )}
                     </td>
                   );
                 })}
+
+                {hasActions ? (
+                  <td className="px-6 py-5 align-top text-sm text-slate-600">
+                    {row.actions?.length ? <AcoesTabela actions={row.actions} /> : null}
+                  </td>
+                ) : null}
               </tr>
             ))}
           </tbody>

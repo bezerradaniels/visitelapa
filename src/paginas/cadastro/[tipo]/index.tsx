@@ -61,6 +61,7 @@ export default function CadastroTipoPagina({
             variant="publico"
             submitPath="/api/solicitacoes-publicas"
             submitBody={{ tipo }}
+            successRedirectHref={`/obrigado?origem=cadastro&tipo=${tipo}`}
           />
         </div>
       </Container>
