@@ -11,16 +11,18 @@ import {
   obterValoresModulo,
   obterModuloDashboard,
 } from "@/servicos/dashboard";
-import { DashboardModuloId } from "@/tipos/plataforma";
+import { DashboardModuloId, FormValues } from "@/tipos/plataforma";
 
 type EdicaoModuloPaginaProps = {
   modulo: DashboardModuloId;
   slug?: string;
+  initialValues?: FormValues;
 };
 
 export default async function EdicaoModuloPagina({
   modulo,
   slug,
+  initialValues,
 }: EdicaoModuloPaginaProps) {
   const definicao = obterModuloDashboard(modulo);
 
@@ -34,13 +36,26 @@ export default async function EdicaoModuloPagina({
     obterValoresModulo(modulo, slug),
     listarLinhasModulo(modulo),
   ]);
+  const valoresFormulario =
+    isNew && initialValues
+      ? {
+          ...valores,
+          ...initialValues,
+        }
+      : valores;
   const linha = slug
-    ? linhas.find((item) => item.id === slug)
+    ? linhas.find((item: { id: string }) => item.id === slug)
     : undefined;
   const imagem =
-    typeof valores.imagem === "string" && valores.imagem.length > 0
-      ? valores.imagem
-      : undefined;
+    Array.isArray(valoresFormulario.capa) && valoresFormulario.capa[0]?.src
+      ? valoresFormulario.capa[0].src
+      : Array.isArray(valoresFormulario.logo) && valoresFormulario.logo[0]?.src
+        ? valoresFormulario.logo[0].src
+        : Array.isArray(valoresFormulario.galeria) && valoresFormulario.galeria[0]?.src
+          ? valoresFormulario.galeria[0].src
+          : typeof valoresFormulario.imagem === "string" && valoresFormulario.imagem.length > 0
+            ? valoresFormulario.imagem
+            : undefined;
 
   return (
     <ContainerConteudo>
@@ -89,7 +104,7 @@ export default async function EdicaoModuloPagina({
             />
 
             {!isNew && modulo !== "contatos" ? (
-              <AcoesEditoriais tituloItem={String(valores.titulo ?? definicao.label)} />
+              <AcoesEditoriais tituloItem={String(valoresFormulario.titulo ?? definicao.label)} />
             ) : null}
 
             {imagem ? <BlocoMidia imagem={imagem} /> : null}
@@ -101,7 +116,7 @@ export default async function EdicaoModuloPagina({
           modulo={modulo}
           registroId={slug}
           fields={campos}
-          initialValues={valores}
+          initialValues={valoresFormulario}
           submitLabel={
             modulo === "contatos"
               ? "Salvar atendimento"

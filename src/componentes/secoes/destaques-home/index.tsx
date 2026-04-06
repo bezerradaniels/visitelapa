@@ -6,7 +6,7 @@ const destaques = [
   {
     titulo: "Encontre os melhores hotéis da cidade",
     descricao:
-      "Descubra opções de hospedagem para romarias, turismo e viagens em família.",
+      "Descubra opções de hospedagem para romarias e viagens em família.",
     href: "/hoteis",
     tag: "Hospedagem",
   },
@@ -18,11 +18,11 @@ const destaques = [
     tag: "Agenda",
   },
   {
-    titulo: "Explore experiências e roteiros turísticos",
+    titulo: "Divulgue seus pacotes no portal",
     descricao:
-      "Encontre ideias para conhecer Bom Jesus da Lapa de forma mais completa.",
-    href: "/turismo",
-    tag: "Turismo",
+      "Use a área de pacotes para cadastrar viagens, romarias e experiências organizadas.",
+    href: "/cadastro/pacotes",
+    tag: "Pacotes",
   },
 ];
 

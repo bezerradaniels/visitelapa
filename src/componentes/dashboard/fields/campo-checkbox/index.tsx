@@ -17,7 +17,7 @@ export default function CampoCheckbox({
       required={field.required}
       htmlFor={field.name}
     >
-      <div className="flex items-center gap-3 rounded-[32px] border border-slate-200 bg-white px-4 py-3">
+      <div className="flex items-center gap-3 rounded-md border border-slate-200 bg-white px-4 py-3">
         <input
           id={field.name}
           type="checkbox"

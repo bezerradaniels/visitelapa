@@ -19,7 +19,7 @@ export default async function Page({ params }: PageProps) {
   }
 
   const linha = (await listarLinhasModulo(modulo as DashboardModuloId)).find(
-    (item) => item.id === slug
+    (item: { id: string }) => item.id === slug
   );
 
   if (!linha) {

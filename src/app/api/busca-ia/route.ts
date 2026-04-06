@@ -4,7 +4,6 @@ import { listarEventos } from "@/servicos/eventos";
 import { listarHoteis } from "@/servicos/hoteis";
 import { listarNegocios } from "@/servicos/negocios";
 import { listarRestaurantes } from "@/servicos/restaurantes";
-import { listarTurismo } from "@/servicos/turismo";
 import { criarFiltrosPorCategoria } from "@/servicos/utils";
 import type { BuscaIADominio, BuscaIAResultado, BuscaIASugestao } from "@/tipos/busca-ia";
 
@@ -213,11 +212,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ erro: "Pergunta vazia" }, { status: 400 });
   }
 
-  const [hoteis, restaurantes, negocios, turismo, eventos, blog] = await Promise.all([
+  const [hoteis, restaurantes, negocios, eventos, blog] = await Promise.all([
     listarHoteis(),
     listarRestaurantes(),
     listarNegocios(),
-    listarTurismo(),
     listarEventos(),
     listarBlog(),
   ]);
@@ -234,7 +232,7 @@ export async function POST(req: NextRequest) {
         descricao: item.descricao,
         categoria: item.categoria,
         href: `/hoteis/${item.slug}`,
-        termos: [item.localizacao, item.contato, ...item.sobre, ...item.comodidades, ...item.diferenciais],
+        termos: [item.descricao, item.localizacao, item.contato, ...item.comodidades, ...item.diferenciais],
         destaque: Boolean(item.destaqueListagem),
         ordem,
       })),
@@ -250,7 +248,7 @@ export async function POST(req: NextRequest) {
         descricao: item.descricao,
         categoria: item.categoria,
         href: `/restaurantes/${item.slug}`,
-        termos: [item.endereco, item.funcionamento, item.contato, ...item.sobre, ...item.especialidades, ...item.diferenciais],
+        termos: [item.descricao, item.endereco, item.funcionamento, item.contato, ...item.especialidades, ...item.diferenciais],
         destaque: Boolean(item.destaqueListagem),
         ordem,
       })),
@@ -266,23 +264,7 @@ export async function POST(req: NextRequest) {
         descricao: item.descricao,
         categoria: item.categoria,
         href: `/negocios/${item.slug}`,
-        termos: [item.endereco, item.atendimento, item.contato, ...item.sobre, ...item.especialidades, ...item.diferenciais],
-        destaque: Boolean(item.destaqueListagem),
-        ordem,
-      })),
-    },
-    {
-      dominio: "turismo",
-      rotulo: "roteiros turísticos",
-      palavrasChave: ["turismo", "passeio", "passeios", "roteiro", "roteiros", "experiencia", "experiencias"],
-      filtros: criarFiltrosPorCategoria(turismo).map((item) => item.label),
-      linkLista: "/turismo",
-      itens: turismo.map((item, ordem) => ({
-        titulo: item.titulo,
-        descricao: item.descricao,
-        categoria: item.categoria,
-        href: `/turismo/${item.slug}`,
-        termos: [item.duracao, item.formato, item.contato, ...item.sobre, ...item.inclui, ...item.diferenciais],
+        termos: [item.descricao, item.endereco, item.atendimento, item.contato, ...item.especialidades, ...item.diferenciais],
         destaque: Boolean(item.destaqueListagem),
         ordem,
       })),
@@ -298,7 +280,7 @@ export async function POST(req: NextRequest) {
         descricao: item.descricao,
         categoria: item.categoria,
         href: `/eventos/${item.slug}`,
-        termos: [item.data, item.local, item.contato, ...item.sobre, ...item.programacao, ...item.destaques],
+        termos: [item.descricao, item.data, item.local, item.contato, ...item.programacao, ...item.destaques],
         destaque: Boolean(item.destaqueListagem),
         ordem,
       })),
@@ -344,7 +326,7 @@ export async function POST(req: NextRequest) {
 
   if (apiKey) {
     const prompt = `
-Você é um assistente do portal de turismo "Visite Lapa" de Bom Jesus da Lapa, BA.
+Você é um assistente do portal "Visite Lapa" de Bom Jesus da Lapa, BA.
 
 O usuário digitou: "${pergunta}"
 

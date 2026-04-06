@@ -27,6 +27,31 @@ function badgeClasses(status?: string) {
   }
 }
 
+function formatarStatus(status?: string) {
+  switch (status) {
+    case "pendente_aprovacao":
+      return "Pendente";
+    case "revisao":
+      return "Revisao";
+    case "publicado":
+      return "Publicado";
+    case "rascunho":
+      return "Rascunho";
+    case "rejeitado":
+      return "Rejeitado";
+    case "arquivado":
+      return "Arquivado";
+    case "novo":
+      return "Novo";
+    case "lido":
+      return "Lido";
+    case "respondido":
+      return "Respondido";
+    default:
+      return status ?? "";
+  }
+}
+
 export default function TabelaAdmin({ columns, rows }: TabelaAdminProps) {
   return (
     <div className="overflow-hidden rounded-[2rem] border border-slate-200 bg-white">
@@ -71,7 +96,7 @@ export default function TabelaAdmin({ columns, rows }: TabelaAdminProps) {
                         <span
                           className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${badgeClasses(rawValue)}`}
                         >
-                          {rawValue}
+                          {formatarStatus(rawValue)}
                         </span>
                       ) : (
                         rawValue

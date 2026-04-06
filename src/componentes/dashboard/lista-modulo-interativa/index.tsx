@@ -15,6 +15,31 @@ type ListaModuloInterativaProps = {
   actionLabel?: string;
 };
 
+function formatarStatus(status: string) {
+  switch (status) {
+    case "pendente_aprovacao":
+      return "Pendente";
+    case "revisao":
+      return "Revisao";
+    case "publicado":
+      return "Publicado";
+    case "rascunho":
+      return "Rascunho";
+    case "rejeitado":
+      return "Rejeitado";
+    case "arquivado":
+      return "Arquivado";
+    case "novo":
+      return "Novo";
+    case "lido":
+      return "Lido";
+    case "respondido":
+      return "Respondido";
+    default:
+      return status;
+  }
+}
+
 export default function ListaModuloInterativa({
   columns,
   rows,
@@ -66,7 +91,7 @@ export default function ListaModuloInterativa({
                 key={option}
                 value={option}
               >
-                {option}
+                {formatarStatus(option)}
               </option>
             ))}
           </select>

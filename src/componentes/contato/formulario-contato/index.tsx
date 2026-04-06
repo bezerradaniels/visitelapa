@@ -24,6 +24,7 @@ const CAMPOS_CONTATO: FormFieldDefinition[] = [
     label: "WhatsApp",
     section: "Dados principais",
     placeholder: "(77) 99999-9999",
+    required: true,
   },
   {
     kind: "text",

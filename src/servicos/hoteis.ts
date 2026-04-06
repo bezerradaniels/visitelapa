@@ -19,7 +19,11 @@ function mapRow(row: any): Hotel {
     sobre: row.sobre ?? [],
     comodidades: row.comodidades ?? [],
     diferenciais: row.diferenciais ?? [],
-    destaqueListagem: row.destaque_listagem,
+    destaqueListagem:
+      row.destaque_listagem ||
+      row.diferenciais?.[0] ||
+      row.comodidades?.[0] ||
+      row.categoria,
   };
 }
 

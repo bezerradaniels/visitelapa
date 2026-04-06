@@ -7,7 +7,7 @@ type FormGrupoProps = {
 
 export default function FormGrupo({ titulo, children }: FormGrupoProps) {
   return (
-    <section className="rounded-[2rem] border border-slate-200 bg-white p-6 md:p-8">
+    <section className="rounded-2xl border border-slate-200 bg-white p-6 md:p-8">
       <div className="flex items-center justify-between gap-4">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">

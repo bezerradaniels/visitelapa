@@ -2,7 +2,6 @@ export type BuscaIADominio =
   | "hoteis"
   | "restaurantes"
   | "negocios"
-  | "turismo"
   | "eventos"
   | "blog";
 

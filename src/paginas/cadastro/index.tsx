@@ -4,7 +4,6 @@ import {
   Building03Icon,
   Calendar03Icon,
   Hotel01Icon,
-  Location01Icon,
   Restaurant01Icon,
   Ticket01Icon,
 } from "@hugeicons/core-free-icons";
@@ -19,7 +18,6 @@ const ICONES: Record<CadastroTipoId, typeof Ticket01Icon> = {
   hoteis: Hotel01Icon,
   negocios: Building03Icon,
   restaurantes: Restaurant01Icon,
-  turismo: Location01Icon,
 };
 
 export default function CadastroPagina() {

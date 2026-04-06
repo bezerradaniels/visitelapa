@@ -15,7 +15,6 @@ export const assetsEstaticos = {
     blog: "/imagens/img/artigos-em-bom-jesus-da-lapa.jpg",
     negocios: "/imagens/img/comercio-local-bom-jesus-da-lapa.webp",
     eventos: "/imagens/img/eventos-em-bom-jesus-da-lapa.jpg",
-    turismo: "/imagens/img/hero-pacotes.jpg",
     hoteis: "/imagens/img/hoteis-em-bom-jesus-da-lapa.jpg",
     restaurantes: "/imagens/img/restaurante-em-bom-jesus-da-lapa.jpeg",
   },

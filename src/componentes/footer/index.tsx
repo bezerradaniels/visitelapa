@@ -30,7 +30,6 @@ const linksCategorias = [
   { label: "Eventos", href: "/eventos", icon: Calendar03Icon },
   { label: "Blog", href: "/blog", icon: BookOpen01Icon },
   { label: "Restaurantes", href: "/restaurantes", icon: Restaurant01Icon },
-  { label: "Turismo", href: "/turismo", icon: Location01Icon },
 ];
 
 export default function Footer() {
@@ -54,8 +53,8 @@ export default function Footer() {
               </Link>
 
               <p className="mt-4 max-w-sm text-sm leading-6 text-gray-600">
-                Um portal para descobrir experiências, negócios, hospedagem,
-                gastronomia e eventos em Bom Jesus da Lapa.
+                Um portal para descobrir negócios, hospedagem, gastronomia,
+                eventos e conteúdos locais em Bom Jesus da Lapa.
               </p>
             </div>
 
@@ -125,7 +124,7 @@ export default function Footer() {
                     size={16}
                     className="text-gray-400"
                   />
-                  Portal turístico e comercial da cidade
+                  Portal comercial e editorial da cidade
                 </p>
                 <p className="inline-flex items-center gap-2">
                   <Icone
@@ -133,7 +132,7 @@ export default function Footer() {
                     size={16}
                     className="text-gray-400"
                   />
-                  Conteúdos, eventos e experiências locais
+                  Conteúdos, eventos e informações locais
                 </p>
               </div>
             </div>

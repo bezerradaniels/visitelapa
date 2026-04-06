@@ -72,7 +72,7 @@ export default async function RestauranteDetalhePagina({
     >
       <BlocoResumo
         titulo="Sobre o restaurante"
-        paragrafos={restaurante.sobre}
+        texto={restaurante.descricao}
       />
 
       <div className="grid gap-6 md:grid-cols-2">

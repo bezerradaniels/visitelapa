@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { ReactNode } from "react";
 import Sidebar from "@/componentes/dashboard/sidebar";
 import { obterCookieDashboardAdmin } from "@/servicos/admin-auth";
+import { contarSolicitacoesPendentes } from "@/servicos/solicitacoes-publicas";
 
 type DashboardLayoutProps = {
   children: ReactNode;
@@ -20,9 +21,11 @@ export default async function DashboardLayout({
     redirect("/login");
   }
 
+  const aprovacoesPendentes = await contarSolicitacoesPendentes();
+
   return (
     <div className="min-h-screen bg-slate-50 xl:grid xl:grid-cols-[320px_minmax(0,1fr)]">
-      <Sidebar />
+      <Sidebar aprovacoesPendentes={aprovacoesPendentes} />
       <main>{children}</main>
     </div>
   );

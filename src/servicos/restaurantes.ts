@@ -18,7 +18,7 @@ function mapRow(row: any): Restaurante {
     sobre: row.sobre ?? [],
     especialidades: row.especialidades ?? [],
     diferenciais: row.diferenciais ?? [],
-    destaqueListagem: row.destaque_listagem,
+    destaqueListagem: row.destaque_listagem || row.especialidades?.[0] || row.categoria,
   };
 }
 

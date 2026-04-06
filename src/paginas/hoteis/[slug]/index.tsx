@@ -72,7 +72,7 @@ export default async function HotelDetalhePagina({
     >
       <BlocoResumo
         titulo="Sobre o hotel"
-        paragrafos={hotel.sobre}
+        texto={hotel.descricao}
       />
 
       <div className="grid gap-6 md:grid-cols-2">

@@ -11,8 +11,7 @@ export type CadastroTipoId =
   | "eventos"
   | "hoteis"
   | "negocios"
-  | "restaurantes"
-  | "turismo";
+  | "restaurantes";
 
 export type DashboardModuloId =
   | "paginas"
@@ -22,7 +21,6 @@ export type DashboardModuloId =
   | "hoteis"
   | "negocios"
   | "restaurantes"
-  | "turismo"
   | "blog"
   | "categorias"
   | "tags"
@@ -33,7 +31,9 @@ export type DashboardModuloId =
 export type FieldKind =
   | "text"
   | "textarea"
+  | "rich-text"
   | "select"
+  | "checkbox-group"
   | "checkbox"
   | "switch"
   | "date"
@@ -80,11 +80,26 @@ export type FormFieldDefinition = {
   endName?: string;
   startLabel?: string;
   endLabel?: string;
+  singleDayFieldName?: string;
+  singleDayLabel?: string;
   aspectRatio?: ImageAspectRatio;
   maxFiles?: number;
   accept?: string;
   buttonLabel?: string;
   placeholderSrc?: string;
+  allowCustom?: boolean;
+  multiple?: boolean;
+  size?: number;
+  readOnly?: boolean;
+  fullWidth?: boolean;
+  quickActions?: Array<{
+    label: string;
+    value: string;
+    updates?: Array<{
+      name: string;
+      value: string;
+    }>;
+  }>;
 };
 
 export type FormValue = string | number | boolean | ImageFieldValue;
@@ -127,6 +142,19 @@ export type PublicSubmission = {
   status: StatusEditorial;
   criadoEm: string;
 };
+
+export type PublicSubmissionDetail = PublicSubmission & {
+  contatoWhatsapp: string;
+  atualizadoEm: string;
+  payload: FormValues;
+};
+
+export type PublicSubmissionAction =
+  | "salvar"
+  | "aprovar"
+  | "solicitar_revisao"
+  | "rejeitar"
+  | "arquivar";
 
 export type PortalContactMessage = {
   id: string;

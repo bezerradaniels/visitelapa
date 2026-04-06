@@ -25,7 +25,7 @@ export default function Hero() {
 
       <div className="relative mx-auto flex min-h-[40vh] py-20 max-w-4xl flex-col items-center justify-center text-center">
         <span className="inline-flex items-center gap-2 rounded-full px-4 py-1 text-sm font-medium text-main bg-linear-to-r from-sky-200 via-fuchsia-200 to-pink-200">
-          Portal turístico de Bom Jesus da Lapa
+          Portal de Bom Jesus da Lapa
         </span>
 
         <h1 className="mt-6 max-w-3xl text-4xl font-bold tracking-tight text-white md:text-4xl">
@@ -33,7 +33,7 @@ export default function Hero() {
         </h1>
 
         <p className="mt-4 max-w-2xl text-lg text-white opacity-80 md:text-xl">
-          Encontre hotéis, eventos, restaurantes, negócios e experiências com
+          Encontre hotéis, eventos, restaurantes, negócios e informações locais com
           ajuda de inteligência artificial.
         </p>
 

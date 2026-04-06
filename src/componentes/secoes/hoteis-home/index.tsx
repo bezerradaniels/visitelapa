@@ -15,7 +15,7 @@ export default async function HoteisHome() {
       <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <TituloSecao
           titulo="Hotéis em destaque"
-          subtitulo="Encontre opções de hospedagem para romarias, turismo e viagens em família."
+          subtitulo="Encontre opções de hospedagem para romarias e viagens em família."
         />
 
         <Link

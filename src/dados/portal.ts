@@ -20,7 +20,6 @@ export const configuracaoPortal = {
     "hoteis",
     "negocios",
     "restaurantes",
-    "turismo",
     "cidades",
     "bairros",
     "categorias",

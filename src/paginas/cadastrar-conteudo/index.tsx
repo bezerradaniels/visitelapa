@@ -3,7 +3,6 @@ import {
   Building03Icon,
   Calendar03Icon,
   Hotel01Icon,
-  Location01Icon,
   Restaurant01Icon,
   Shield01Icon,
   HelpCircleIcon,
@@ -23,7 +22,6 @@ const ICONES: Record<CadastroTipoId, typeof Ticket01Icon> = {
   hoteis: Hotel01Icon,
   negocios: Building03Icon,
   restaurantes: Restaurant01Icon,
-  turismo: Location01Icon,
 };
 
 const TITULOS_BOTOES: Record<CadastroTipoId, string> = {
@@ -32,7 +30,6 @@ const TITULOS_BOTOES: Record<CadastroTipoId, string> = {
   hoteis: "Hotéis",
   negocios: "Negócios",
   restaurantes: "Restaurantes",
-  turismo: "Turismo",
 };
 
 export default function CadastrarConteudoPagina() {

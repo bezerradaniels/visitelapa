@@ -77,7 +77,7 @@ export default async function NegocioDetalhePagina({
     >
       <BlocoResumo
         titulo="Sobre o negócio"
-        paragrafos={negocio.sobre}
+        texto={negocio.descricao}
       />
 
       <div className="grid gap-6 md:grid-cols-2">

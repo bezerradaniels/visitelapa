@@ -27,3 +27,35 @@ body {
   background-color: var(--color-page);
   color: var(--color-main);
 }
+
+.blog-rich img,
+.tiptap-rich-editor img {
+  width: 100%;
+  border-radius: 1.5rem;
+  border: 1px solid var(--color-gray-200);
+  margin: 1.5rem 0;
+  background: white;
+}
+
+.blog-rich figure[data-type="gallery-block"] {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  margin: 2rem 0;
+  padding: 1rem;
+  border-radius: 1.75rem;
+  border: 1px solid var(--color-gray-200);
+  background: white;
+}
+
+.blog-rich figure[data-type="gallery-block"] img {
+  aspect-ratio: 16 / 10;
+  object-fit: cover;
+  margin: 0;
+}
+
+@media (max-width: 768px) {
+  .blog-rich figure[data-type="gallery-block"] {
+    grid-template-columns: 1fr;
+  }
+}

@@ -5,8 +5,8 @@ import {
   Building03Icon,
   Calendar03Icon,
   Hotel01Icon,
-  Location01Icon,
   Restaurant01Icon,
+  Ticket01Icon,
 } from "@hugeicons/core-free-icons";
 import type { IconSvgElement } from "@hugeicons/react";
 import Secao from "@/componentes/secoes/secao";
@@ -50,11 +50,11 @@ const atalhos = [
     icon: Restaurant01Icon,
   },
   {
-    titulo: "Turismo",
-    descricao: "Descubra roteiros, pacotes e experiências turísticas.",
-    href: "/turismo",
-    tag: "Experiências",
-    icon: Location01Icon,
+    titulo: "Pacotes",
+    descricao: "Cadastre e divulgue pacotes de viagem, romaria e experiências organizadas.",
+    href: "/cadastro/pacotes",
+    tag: "Viagens",
+    icon: Ticket01Icon,
   },
 ] as const satisfies Array<{
   titulo: string;

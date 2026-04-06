@@ -75,7 +75,7 @@ export default async function EventoDetalhePagina({
     >
       <BlocoResumo
         titulo="Sobre o evento"
-        paragrafos={evento.sobre}
+        texto={evento.descricao}
       />
 
       <div className="grid gap-6 md:grid-cols-2">
@@ -84,7 +84,7 @@ export default async function EventoDetalhePagina({
           itens={evento.programacao}
         />
         <BlocoDestaques
-          titulo="Destaques"
+          titulo="Extras"
           itens={evento.destaques}
         />
       </div>

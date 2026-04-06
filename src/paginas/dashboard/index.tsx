@@ -20,7 +20,7 @@ export default async function DashboardPagina() {
     categoria: item.tipo,
     status: item.status,
     atualizado: item.criadoEm,
-    href: `/dashboard/${item.tipo}`,
+    href: `/dashboard/aprovacoes/${item.id}`,
   }));
 
   return (

@@ -1,7 +1,9 @@
+import GaleriaPost from "@/componentes/blog/galeria-post";
 import BlocoListaInformacoes from "@/componentes/dashboard/blocos-info/bloco-lista-informacoes";
 import LayoutDetalhe from "@/componentes/layouts/layout-detalhe";
 import Link from "next/link";
 import { buscarPostPorSlug, listarBlog } from "@/servicos/blog";
+import { normalizarHtmlBlog } from "@/servicos/blog-conteudo";
 
 type BlogDetalhePaginaProps = {
   params: {
@@ -30,6 +32,8 @@ export default async function BlogDetalhePagina({
       </div>
     );
   }
+
+  const conteudoHtml = normalizarHtmlBlog(post.conteudoHtml);
 
   return (
     <LayoutDetalhe
@@ -80,24 +84,33 @@ export default async function BlogDetalhePagina({
           <span>Leitura de {post.leitura}</span>
         </div>
 
-        <div className="mt-8 space-y-6 text-base leading-8 text-gray-700">
-          {post.conteudo.map((paragrafo) => (
-            <p key={paragrafo}>{paragrafo}</p>
-          ))}
+        {conteudoHtml ? (
+          <div
+            className="blog-rich mt-8 text-base leading-8 text-gray-700 [&_a]:font-semibold [&_a]:text-main [&_blockquote]:my-6 [&_blockquote]:border-l-4 [&_blockquote]:border-slate-300 [&_blockquote]:pl-5 [&_blockquote]:italic [&_h2]:mt-10 [&_h2]:text-2xl [&_h2]:font-semibold [&_h2]:text-main [&_h3]:mt-8 [&_h3]:text-xl [&_h3]:font-semibold [&_h3]:text-main [&_hr]:my-8 [&_ol]:my-4 [&_ol]:list-decimal [&_ol]:pl-6 [&_p]:my-4 [&_ul]:my-4 [&_ul]:list-disc [&_ul]:pl-6"
+            dangerouslySetInnerHTML={{ __html: conteudoHtml }}
+          />
+        ) : (
+          <div className="mt-8 space-y-6 text-base leading-8 text-gray-700">
+            {post.conteudo.map((paragrafo) => (
+              <p key={paragrafo}>{paragrafo}</p>
+            ))}
 
-          {post.secoes.map((secao) => (
-            <div key={secao.titulo}>
-              <h2 className="text-2xl font-semibold text-main">
-                {secao.titulo}
-              </h2>
+            {post.secoes.map((secao) => (
+              <div key={secao.titulo}>
+                <h2 className="text-2xl font-semibold text-main">
+                  {secao.titulo}
+                </h2>
 
-              <p className="mt-4">{secao.texto}</p>
-            </div>
-          ))}
+                <p className="mt-4">{secao.texto}</p>
+              </div>
+            ))}
 
-          <p>{post.fechamento}</p>
-        </div>
+            <p>{post.fechamento}</p>
+          </div>
+        )}
       </article>
+
+      <GaleriaPost imagens={post.galeria} />
     </LayoutDetalhe>
   );
 }

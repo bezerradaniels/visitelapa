@@ -7,12 +7,19 @@ import {
   pacotesDashboard,
   tagsDashboard,
 } from "@/dados/dashboard";
-import { buscarPostPorSlug, listarBlog } from "@/servicos/blog";
+import {
+  buscarPostPorSlugAdmin,
+  listarBlogAdmin,
+} from "@/servicos/blog";
+import {
+  criarValorInicialImagemBlog,
+  montarHtmlLegadoBlog,
+  normalizarGaleriaBlog,
+} from "@/servicos/blog-conteudo";
 import { buscarEventoPorSlug, listarEventos } from "@/servicos/eventos";
 import { buscarHotelPorSlug, listarHoteis } from "@/servicos/hoteis";
 import { buscarNegocioPorSlug, listarNegocios } from "@/servicos/negocios";
 import { buscarRestaurantePorSlug, listarRestaurantes } from "@/servicos/restaurantes";
-import { buscarTurismoPorSlug, listarTurismo } from "@/servicos/turismo";
 import {
   CadastroTipoId,
   DashboardModuleConfig,
@@ -21,7 +28,18 @@ import {
   FormFieldDefinition,
   FormValues,
 } from "@/tipos/plataforma";
-import { criarValoresIniciais, obterCamposBlog, obterCamposCadastro } from "./cadastros";
+import {
+  criarValoresIniciais,
+  listarTiposCadastroDashboard,
+  obterCamposBlog,
+  obterCamposCadastro,
+  obterRotuloTipoCadastro,
+} from "./cadastros";
+import { listarCategoriasCadastro, obterCategoriaCadastro } from "./categorias-cadastro";
+import {
+  contarSolicitacoesPendentes,
+  listarSolicitacoesPendentes as listarSolicitacoesPendentesPublicas,
+} from "./solicitacoes-publicas";
 
 const MODULOS_DASHBOARD: DashboardModuleConfig[] = [
   {
@@ -45,7 +63,7 @@ const MODULOS_DASHBOARD: DashboardModuleConfig[] = [
   {
     id: "pacotes",
     label: "Pacotes",
-    descricao: "Cadastros públicos e internos de pacotes turísticos.",
+    descricao: "Cadastros públicos e internos de pacotes de viagem e romaria.",
     href: "/dashboard/pacotes",
     acaoLabel: "Novo pacote",
     supportsCreate: true,
@@ -88,15 +106,6 @@ const MODULOS_DASHBOARD: DashboardModuleConfig[] = [
     supportsEdit: true,
   },
   {
-    id: "turismo",
-    label: "Turismo",
-    descricao: "Gerencie experiências, roteiros e passeios.",
-    href: "/dashboard/turismo",
-    acaoLabel: "Nova experiência",
-    supportsCreate: true,
-    supportsEdit: true,
-  },
-  {
     id: "blog",
     label: "Blog",
     descricao: "Escreva, edite e publique conteúdos editoriais.",
@@ -108,7 +117,7 @@ const MODULOS_DASHBOARD: DashboardModuleConfig[] = [
   {
     id: "categorias",
     label: "Categorias",
-    descricao: "Agrupe conteúdos e entidades do portal.",
+    descricao: "Cadastre categorias específicas para pacotes, eventos, hotéis, negócios e restaurantes.",
     href: "/dashboard/categorias",
     acaoLabel: "Nova categoria",
     supportsCreate: true,
@@ -162,15 +171,15 @@ export function obterModuloDashboard(modulo: string) {
 export async function listarEstatisticasDashboard(): Promise<DashboardStat[]> {
   const { supabase } = await import("@/lib/supabase");
 
-  const [negocios, hoteis, restaurantes, turismo, eventos, blog, pendentes, contatos] =
+  const [negocios, hoteis, restaurantes, eventos, pacotes, blog, pendentes, contatos] =
     await Promise.all([
       supabase.from("negocios").select("id", { count: "exact", head: true }).eq("status", "publicado"),
       supabase.from("hoteis").select("id", { count: "exact", head: true }).eq("status", "publicado"),
       supabase.from("restaurantes").select("id", { count: "exact", head: true }).eq("status", "publicado"),
-      supabase.from("turismo").select("id", { count: "exact", head: true }).eq("status", "publicado"),
       supabase.from("eventos").select("id", { count: "exact", head: true }).eq("status", "publicado"),
+      supabase.from("pacotes").select("id", { count: "exact", head: true }).eq("status", "publicado"),
       supabase.from("blog_posts").select("id", { count: "exact", head: true }).eq("status", "publicado"),
-      supabase.from("solicitacoes_publicas").select("id", { count: "exact", head: true }).eq("status", "pendente_aprovacao"),
+      contarSolicitacoesPendentes(),
       supabase.from("contatos").select("id", { count: "exact", head: true }),
     ]);
 
@@ -178,8 +187,8 @@ export async function listarEstatisticasDashboard(): Promise<DashboardStat[]> {
     (negocios.count ?? 0) +
     (hoteis.count ?? 0) +
     (restaurantes.count ?? 0) +
-    (turismo.count ?? 0) +
     (eventos.count ?? 0) +
+    (pacotes.count ?? 0) +
     (blog.count ?? 0);
 
   return [
@@ -192,7 +201,7 @@ export async function listarEstatisticasDashboard(): Promise<DashboardStat[]> {
     {
       id: "pendentes",
       label: "Aguardando aprovação",
-      valor: `${pendentes.count ?? 0}`,
+      valor: `${pendentes}`,
       descricao: "Solicitações públicas aguardando análise.",
     },
     {
@@ -211,23 +220,7 @@ export async function listarEstatisticasDashboard(): Promise<DashboardStat[]> {
 }
 
 export async function listarSolicitacoesPendentes() {
-  const { supabase } = await import("@/lib/supabase");
-  const { data, error } = await supabase
-    .from("solicitacoes_publicas")
-    .select("*")
-    .eq("status", "pendente_aprovacao")
-    .order("criado_em", { ascending: false });
-  if (error) throw error;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return (data ?? []).map((row: any) => ({
-    id: row.id,
-    tipo: row.tipo,
-    titulo: row.titulo,
-    responsavel: row.responsavel,
-    contatoEmail: row.contato_email,
-    status: row.status,
-    criadoEm: row.criado_em,
-  }));
+  return listarSolicitacoesPendentesPublicas();
 }
 
 export async function listarLinhasModulo(modulo: DashboardModuloId) {
@@ -251,14 +244,32 @@ export async function listarLinhasModulo(modulo: DashboardModuloId) {
         href: `/dashboard/conteudos/${item.slug}`,
       }));
     case "pacotes":
-      return pacotesDashboard.map((item) => ({
-        id: item.slug,
-        titulo: item.titulo,
-        categoria: item.categoria,
-        status: item.status,
-        atualizado: item.atualizadoEm,
-        href: `/dashboard/pacotes/${item.slug}`,
-      }));
+      try {
+        const { supabase } = await import("@/lib/supabase");
+        const { data, error } = await supabase
+          .from("pacotes")
+          .select("slug, titulo, categoria, status, updated_at, data_ida")
+          .order("data_ida", { ascending: true })
+          .order("updated_at", { ascending: false });
+        if (error) throw error;
+        return (data ?? []).map((row) => ({
+          id: row.slug,
+          titulo: row.titulo ?? "",
+          categoria: row.categoria ?? "Pacote",
+          status: row.status ?? "publicado",
+          atualizado: row.updated_at ?? row.data_ida ?? "",
+          href: `/dashboard/pacotes/${row.slug}`,
+        }));
+      } catch {
+        return pacotesDashboard.map((item) => ({
+          id: item.slug,
+          titulo: item.titulo,
+          categoria: item.categoria,
+          status: item.status,
+          atualizado: item.atualizadoEm,
+          href: `/dashboard/pacotes/${item.slug}`,
+        }));
+      }
     case "eventos": {
       const itens = await listarEventos();
       return itens.map((item) => ({
@@ -303,37 +314,38 @@ export async function listarLinhasModulo(modulo: DashboardModuloId) {
         href: `/dashboard/restaurantes/${item.slug}`,
       }));
     }
-    case "turismo": {
-      const itens = await listarTurismo();
-      return itens.map((item) => ({
-        id: item.slug,
-        titulo: item.titulo,
-        categoria: item.categoria,
-        status: "publicado" as const,
-        atualizado: item.duracao,
-        href: `/dashboard/turismo/${item.slug}`,
-      }));
-    }
     case "blog": {
-      const itens = await listarBlog();
+      const itens = await listarBlogAdmin();
       return itens.map((item) => ({
         id: item.slug,
         titulo: item.titulo,
         categoria: item.categoria,
-        status: "publicado" as const,
-        atualizado: item.publicadoEm,
+        status: item.status,
+        atualizado: item.publicadoEm || "Sem publicação",
         href: `/dashboard/blog/${item.slug}`,
       }));
     }
     case "categorias":
-      return categoriasDashboard.map((item) => ({
-        id: item.slug,
-        titulo: item.titulo,
-        categoria: item.categoria ?? "Categoria",
-        status: item.status,
-        atualizado: item.atualizadoEm,
-        href: `/dashboard/categorias/${item.slug}`,
-      }));
+      try {
+        const itens = await listarCategoriasCadastro();
+        return itens.map((item) => ({
+          id: item.id,
+          titulo: item.nome,
+          categoria: obterRotuloTipoCadastro(item.tipo),
+          status: item.status,
+          atualizado: item.atualizadoEm,
+          href: `/dashboard/categorias/${item.id}`,
+        }));
+      } catch {
+        return categoriasDashboard.map((item) => ({
+          id: item.slug,
+          titulo: item.titulo,
+          categoria: item.categoria ?? "Categoria",
+          status: item.status,
+          atualizado: item.atualizadoEm,
+          href: `/dashboard/categorias/${item.slug}`,
+        }));
+      }
     case "tags":
       return tagsDashboard.map((item) => ({
         id: item.slug,
@@ -422,6 +434,15 @@ export async function listarLinhasModulo(modulo: DashboardModuloId) {
 }
 
 export function listarColunasModulo(modulo: DashboardModuloId) {
+  if (modulo === "categorias") {
+    return [
+      { key: "titulo", label: "Categoria" },
+      { key: "categoria", label: "Cadastro" },
+      { key: "status", label: "Status" },
+      { key: "atualizado", label: "Atualizado" },
+    ];
+  }
+
   if (modulo === "contatos") {
     return [
       { key: "titulo", label: "Contato" },
@@ -462,7 +483,7 @@ function camposBasicosSimples(secao = "Conteúdo"): FormFieldDefinition[] {
 
 export function obterCamposModulo(modulo: DashboardModuloId): FormFieldDefinition[] {
   if (
-    ["pacotes", "eventos", "hoteis", "negocios", "restaurantes", "turismo"].includes(
+    ["pacotes", "eventos", "hoteis", "negocios", "restaurantes"].includes(
       modulo
     )
   ) {
@@ -477,6 +498,37 @@ export function obterCamposModulo(modulo: DashboardModuloId): FormFieldDefinitio
     case "conteudos":
       return camposBasicosSimples("Conteúdo");
     case "categorias":
+      return [
+        {
+          kind: "select",
+          name: "tipoCadastro",
+          label: "Cadastro",
+          section: "Categoria",
+          options: listarTiposCadastroDashboard(),
+          required: true,
+        },
+        {
+          kind: "text",
+          name: "titulo",
+          label: "Nome",
+          section: "Categoria",
+          required: true,
+        },
+        {
+          kind: "text",
+          name: "slug",
+          label: "Slug",
+          section: "Categoria",
+          required: true,
+        },
+        {
+          kind: "textarea",
+          name: "descricao",
+          label: "Descrição",
+          section: "Categoria",
+          rows: 3,
+        },
+      ];
     case "tags":
       return [
         {
@@ -597,13 +649,25 @@ export async function obterValoresModulo(
   const campos = obterCamposModulo(modulo);
   const seedBase: FormValues = {
     nomeContato: "",
-    emailContato: "",
+    whatsappResponsavel: "",
     whatsapp: "",
     instagram: "",
-    aceitaTermos: true,
+    endereco: "",
+    numero: "",
+    bairro: "",
+    cidade: "",
+    estado: "",
+    origemCidade: "",
+    origemEstado: "",
+    destinoCidade: "",
+    destinoEstado: "",
+    horariosEvento: "",
+    valorFinalParcelado: "",
+    aceitaTermos: false,
     autor: "",
     conteudo: "",
     seoDescricao: "",
+    tipoCadastro: "",
   };
 
   const linhas = await listarLinhasModulo(modulo);
@@ -625,7 +689,6 @@ export async function obterValoresModulo(
   switch (modulo) {
     case "paginas":
     case "conteudos":
-    case "categorias":
     case "tags":
     case "cidades":
     case "bairros": {
@@ -652,7 +715,6 @@ export async function obterValoresModulo(
       const colecao = {
         paginas: paginasDashboard,
         conteudos: conteudosDashboard,
-        categorias: categoriasDashboard,
         tags: tagsDashboard,
       }[modulo];
 
@@ -668,25 +730,82 @@ export async function obterValoresModulo(
         seoTitulo: item?.titulo ?? registro.titulo,
       });
     }
-    case "pacotes": {
-      const item = pacotesDashboard.find((entry) => entry.slug === slug);
+    case "categorias": {
+      const item = slug ? await obterCategoriaCadastro(slug) : null;
 
       return criarValoresIniciais(campos, {
         ...seedBase,
-        titulo: item?.titulo ?? registro.titulo,
-        slug: item?.slug ?? registro.id,
-        categoria: item?.categoria ?? registro.categoria,
+        tipoCadastro: item?.tipo ?? "",
+        titulo: item?.nome ?? registro.titulo,
+        slug: item?.slug ?? "",
         descricao: item?.descricao ?? "",
-        dataIda: item?.dataIda ?? "",
-        dataRetorno: item?.dataRetorno ?? "",
-        origem: item?.origem ?? "",
-        destino: item?.destino ?? "",
-        valorVista: item?.valorVista ?? "",
-        valorParcelado: item?.valorParcelado ?? "",
-        parcelas: item?.parcelas ?? "",
-        publicado: item?.status === "publicado",
-        seoTitulo: item?.titulo ?? registro.titulo,
+        seoTitulo: item?.nome ?? registro.titulo,
       });
+    }
+    case "pacotes": {
+      try {
+        const { supabase } = await import("@/lib/supabase");
+        const { data: item } = await supabase
+          .from("pacotes")
+          .select("*")
+          .eq("slug", slug)
+          .maybeSingle();
+
+        return criarValoresIniciais(campos, {
+          ...seedBase,
+          titulo: item?.titulo ?? registro.titulo,
+          slug: item?.slug ?? registro.id,
+          categoria: item?.categoria ?? registro.categoria,
+          descricao: item?.descricao ?? "",
+          imagem: item?.imagem ?? "",
+          dataIda: item?.data_ida ?? "",
+          dataRetorno: item?.data_retorno ?? "",
+          origemCidade: item?.origem_cidade ?? "",
+          origemEstado: item?.origem_estado ?? "",
+          destinoCidade: item?.destino_cidade ?? "",
+          destinoEstado: item?.destino_estado ?? "",
+          valorVista:
+            typeof item?.valor_vista === "number" ? String(item.valor_vista) : "",
+          valorParcelado:
+            typeof item?.valor_parcelado === "number"
+              ? String(item.valor_parcelado)
+              : "",
+          parcelas: item?.parcelas ? String(item.parcelas) : "",
+          comodidades: Array.isArray(item?.comodidades)
+            ? item.comodidades.join(", ")
+            : "",
+          valorFinalParcelado:
+            typeof item?.valor_final_parcelado === "number"
+              ? String(item.valor_final_parcelado)
+              : "",
+          publicado: item?.status === "publicado",
+          seoTitulo: item?.titulo ?? registro.titulo,
+          whatsapp: item?.whatsapp ?? seedBase.whatsapp,
+          instagram: item?.instagram ?? seedBase.instagram,
+        });
+      } catch {
+        const item = pacotesDashboard.find((entry) => entry.slug === slug);
+
+        return criarValoresIniciais(campos, {
+          ...seedBase,
+          titulo: item?.titulo ?? registro.titulo,
+          slug: item?.slug ?? registro.id,
+          categoria: item?.categoria ?? registro.categoria,
+          descricao: item?.descricao ?? "",
+          dataIda: item?.dataIda ?? "",
+          dataRetorno: item?.dataRetorno ?? "",
+          origemCidade: item?.origem ?? "",
+          origemEstado: "",
+          destinoCidade: item?.destino ?? "",
+          destinoEstado: "",
+          valorVista: item?.valorVista ?? "",
+          valorParcelado: item?.valorParcelado ?? "",
+          parcelas: item?.parcelas ?? "",
+          valorFinalParcelado: "",
+          publicado: item?.status === "publicado",
+          seoTitulo: item?.titulo ?? registro.titulo,
+        });
+      }
     }
     case "eventos": {
       const item = await buscarEventoPorSlug(slug);
@@ -698,15 +817,17 @@ export async function obterValoresModulo(
         categoria: item?.categoria ?? registro.categoria,
         descricao: item?.descricao ?? "",
         imagem: item?.imagem ?? "",
-        sobre: item?.sobre.join("\n\n") ?? "",
         destaqueListagem: item?.destaqueListagem ?? "",
         localEvento: item?.local ?? "",
+        horariosEvento: item?.programacao.join(", ") ?? "",
+        extrasEvento: item?.destaques.join(", ") ?? "",
         valorIngresso: "",
         eventoGratuito: false,
         publicado: registro.status === "publicado",
         seoTitulo: item?.titulo ?? registro.titulo,
         whatsapp: item?.whatsapp ?? seedBase.whatsapp,
         instagram: item?.instagram ?? seedBase.instagram,
+        whatsappResponsavel: item?.contato ?? seedBase.whatsappResponsavel,
       });
     }
     case "hoteis": {
@@ -719,7 +840,8 @@ export async function obterValoresModulo(
         categoria: item?.categoria ?? registro.categoria,
         descricao: item?.descricao ?? "",
         imagem: item?.imagem ?? "",
-        sobre: item?.sobre.join("\n\n") ?? "",
+        comodidades: item?.comodidades.join(", ") ?? "",
+        diferenciais: item?.diferenciais.join(", ") ?? "",
         destaqueListagem: item?.destaqueListagem ?? "",
         checkIn: item?.checkIn ?? "",
         checkOut: item?.checkOut ?? "",
@@ -727,6 +849,8 @@ export async function obterValoresModulo(
         seoTitulo: item?.titulo ?? registro.titulo,
         whatsapp: item?.whatsapp ?? seedBase.whatsapp,
         instagram: item?.instagram ?? seedBase.instagram,
+        whatsappResponsavel: item?.contato ?? seedBase.whatsappResponsavel,
+        endereco: item?.localizacao ?? seedBase.endereco,
       });
     }
     case "negocios": {
@@ -739,7 +863,6 @@ export async function obterValoresModulo(
         categoria: item?.categoria ?? registro.categoria,
         descricao: item?.descricao ?? "",
         imagem: item?.imagem ?? "",
-        sobre: item?.sobre.join("\n\n") ?? "",
         destaqueListagem: item?.destaqueListagem ?? "",
         tipoNegocio: "empresa",
         username: item?.username ?? "",
@@ -747,6 +870,8 @@ export async function obterValoresModulo(
         seoTitulo: item?.titulo ?? registro.titulo,
         whatsapp: item?.whatsapp ?? seedBase.whatsapp,
         instagram: item?.instagram ?? seedBase.instagram,
+        whatsappResponsavel: item?.contato ?? seedBase.whatsappResponsavel,
+        endereco: item?.endereco ?? seedBase.endereco,
       });
     }
     case "restaurantes": {
@@ -759,37 +884,25 @@ export async function obterValoresModulo(
         categoria: item?.categoria ?? registro.categoria,
         descricao: item?.descricao ?? "",
         imagem: item?.imagem ?? "",
-        sobre: item?.sobre.join("\n\n") ?? "",
         destaqueListagem: item?.destaqueListagem ?? "",
-        tipoComida: item?.categoria ?? "",
+        funcionamento: item?.funcionamento ?? "",
+        especialidades: item?.especialidades.join(", ") ?? "",
+        diferenciais: item?.diferenciais.join(", ") ?? "",
         publicado: registro.status === "publicado",
         seoTitulo: item?.titulo ?? registro.titulo,
         whatsapp: item?.whatsapp ?? seedBase.whatsapp,
         instagram: item?.instagram ?? seedBase.instagram,
-      });
-    }
-    case "turismo": {
-      const item = await buscarTurismoPorSlug(slug);
-
-      return criarValoresIniciais(campos, {
-        ...seedBase,
-        titulo: item?.titulo ?? registro.titulo,
-        slug: item?.slug ?? registro.id,
-        categoria: item?.categoria ?? registro.categoria,
-        descricao: item?.descricao ?? "",
-        imagem: item?.imagem ?? "",
-        sobre: item?.sobre.join("\n\n") ?? "",
-        destaqueListagem: item?.destaqueListagem ?? "",
-        duracao: item?.duracao ?? "",
-        formato: item?.formato ?? "",
-        publicado: registro.status === "publicado",
-        seoTitulo: item?.titulo ?? registro.titulo,
-        whatsapp: item?.whatsapp ?? seedBase.whatsapp,
-        instagram: item?.instagram ?? seedBase.instagram,
+        whatsappResponsavel: item?.contato ?? seedBase.whatsappResponsavel,
+        endereco: item?.endereco ?? seedBase.endereco,
       });
     }
     case "blog": {
-      const item = await buscarPostPorSlug(slug);
+      const item = await buscarPostPorSlugAdmin(slug);
+      const conteudoHtml = item?.conteudoHtml
+        ? item.conteudoHtml
+        : item
+          ? montarHtmlLegadoBlog(item.conteudo, item.secoes, item.fechamento)
+          : seedBase.conteudo;
 
       return criarValoresIniciais(campos, {
         ...seedBase,
@@ -798,14 +911,13 @@ export async function obterValoresModulo(
         categoria: item?.categoria ?? registro.categoria,
         descricao: item?.descricao ?? "",
         imagem: item?.imagem ?? "",
-        conteudo: item
-          ? [...item.conteudo, ...item.secoes.map((secao) => `${secao.titulo}\n${secao.texto}`), item.fechamento].join(
-              "\n\n"
-            )
-          : seedBase.conteudo,
+        capa: criarValorInicialImagemBlog(item?.imagem, "Capa atual"),
+        galeria: normalizarGaleriaBlog(item?.galeria),
+        conteudo: conteudoHtml,
         autor: item?.autor ?? seedBase.autor,
         tags: item?.categoria.toLowerCase() ?? "",
         seoTitulo: item?.titulo ?? registro.titulo,
+        publicado: item?.status === "publicado" || registro.status === "publicado",
       });
     }
     case "contatos": {

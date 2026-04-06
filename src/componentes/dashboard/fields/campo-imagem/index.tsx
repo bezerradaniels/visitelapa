@@ -2,7 +2,6 @@
 
 import Image from "next/image";
 import { ChangeEvent, useId, useRef } from "react";
-import { assetsEstaticos } from "@/dados/assets";
 import {
   ImageCropFocus,
   ImageFieldItem,
@@ -70,7 +69,6 @@ export default function CampoImagem({
   const aspectRatio = field.aspectRatio ?? "16:10";
   const maxFiles = field.maxFiles ?? (field.kind === "image-gallery" ? 10 : 1);
   const isGallery = field.kind === "image-gallery";
-  const placeholderSrc = field.placeholderSrc ?? assetsEstaticos.placeholders.cardPadrao;
   const limiteAtingido = isGallery && imagens.length >= maxFiles;
 
   async function handleFileChange(event: ChangeEvent<HTMLInputElement>) {
@@ -142,7 +140,7 @@ export default function CampoImagem({
             type="button"
             onClick={openFilePicker}
             disabled={limiteAtingido}
-            className="inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-main transition hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex items-center justify-center rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-main transition hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {imagens.length > 0
               ? isGallery
@@ -163,112 +161,103 @@ export default function CampoImagem({
         </div>
 
         {imagens.length === 0 ? (
-          <div className="rounded-[1.8rem] border border-dashed border-slate-200 bg-slate-50 p-4">
-            <div
-              className={`relative overflow-hidden rounded-[1.4rem] border border-slate-200 bg-white ${ASPECT_RATIO_CLASSES[aspectRatio]}`}
-            >
-              <Image
-                src={placeholderSrc}
-                alt={`Placeholder de ${field.label.toLowerCase()}`}
-                fill
-                unoptimized
-                className="object-cover"
-              />
-            </div>
-            <p className="mt-3 text-sm leading-6 text-slate-500">
-              Nenhuma imagem enviada. Um placeholder simples sera usado enquanto este
-              campo estiver vazio.
-            </p>
+          <div className="rounded-md border border-dashed border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500">
+            Nenhuma imagem enviada ainda.
           </div>
         ) : (
           <div className="grid gap-4 xl:grid-cols-2">
             {imagens.map((imagem, index) => (
               <article
                 key={imagem.id}
-                className="rounded-[1.8rem] border border-slate-200 bg-slate-50 p-4"
+                className="rounded-md border border-slate-200 bg-slate-50 p-4"
               >
-                <div className="flex items-center justify-between gap-4">
-                  <div className="min-w-0">
+                <div className="flex items-start gap-4">
+                  <div
+                    className={`relative h-[125px] w-[125px] shrink-0 overflow-hidden rounded-md border border-slate-200 bg-white ${ASPECT_RATIO_CLASSES[aspectRatio]}`}
+                  >
+                    {imagem.src ? (
+                      <Image
+                        src={imagem.src}
+                        alt={imagem.name}
+                        fill
+                        unoptimized
+                        className="object-cover transition"
+                        style={{
+                          objectPosition: OBJECT_POSITIONS[imagem.cropFocus],
+                          transform: `scale(${imagem.zoom})`,
+                        }}
+                      />
+                    ) : (
+                      <div className="flex h-full items-center justify-center bg-slate-100 px-3 text-center text-xs font-medium text-slate-500">
+                        Previa indisponivel
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-semibold text-main">
                       {imagem.name}
                     </p>
                     <p className="mt-1 text-xs uppercase tracking-[0.18em] text-slate-500">
                       {field.kind === "image-gallery" ? `Imagem ${index + 1}` : "Imagem principal"}
                     </p>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() => removerImagem(imagem.id)}
-                    className="text-xs font-semibold text-slate-500 transition hover:text-main"
-                  >
-                    Remover
-                  </button>
-                </div>
-
-                <div
-                  className={`relative mt-4 overflow-hidden rounded-[1.4rem] border border-slate-200 bg-white ${ASPECT_RATIO_CLASSES[aspectRatio]}`}
-                >
-                  <Image
-                    src={imagem.src}
-                    alt={imagem.name}
-                    fill
-                    unoptimized
-                    className="object-cover transition"
-                    style={{
-                      objectPosition: OBJECT_POSITIONS[imagem.cropFocus],
-                      transform: `scale(${imagem.zoom})`,
-                    }}
-                  />
-                </div>
-
-                <div className="mt-4 grid gap-4 md:grid-cols-[minmax(0,180px)_1fr]">
-                  <div className="space-y-2">
-                    <span className="text-xs font-medium uppercase tracking-[0.18em] text-slate-500">
-                      Enquadramento
-                    </span>
-                    <select
-                      value={imagem.cropFocus}
-                      onChange={(event) =>
-                        atualizarImagem(imagem.id, {
-                          cropFocus: event.target.value as ImageCropFocus,
-                        })
-                      }
-                      className="w-full rounded-[32px] border border-slate-200 bg-white px-4 py-3 text-sm text-main outline-none transition focus:border-slate-400"
-                    >
-                      {FOCUS_OPTIONS.map((option) => (
-                        <option
-                          key={option.value}
-                          value={option.value}
+                    <div className="mt-4 grid gap-4">
+                      <div className="space-y-2">
+                        <span className="text-xs font-medium uppercase tracking-[0.18em] text-slate-500">
+                          Enquadramento
+                        </span>
+                        <select
+                          value={imagem.cropFocus}
+                          onChange={(event) =>
+                            atualizarImagem(imagem.id, {
+                              cropFocus: event.target.value as ImageCropFocus,
+                            })
+                          }
+                          className="w-full rounded-md border border-slate-200 bg-white px-4 py-3 text-sm text-main outline-none transition focus:border-slate-400"
                         >
-                          {option.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                          {FOCUS_OPTIONS.map((option) => (
+                            <option
+                              key={option.value}
+                              value={option.value}
+                            >
+                              {option.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
 
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between gap-3">
-                      <span className="text-xs font-medium uppercase tracking-[0.18em] text-slate-500">
-                        Zoom
-                      </span>
-                      <span className="text-xs font-semibold text-slate-500">
-                        {imagem.zoom.toFixed(1)}x
-                      </span>
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between gap-3">
+                          <span className="text-xs font-medium uppercase tracking-[0.18em] text-slate-500">
+                            Zoom
+                          </span>
+                          <span className="text-xs font-semibold text-slate-500">
+                            {imagem.zoom.toFixed(1)}x
+                          </span>
+                        </div>
+                        <input
+                          type="range"
+                          min="1"
+                          max="2"
+                          step="0.1"
+                          value={imagem.zoom}
+                          onChange={(event) =>
+                            atualizarImagem(imagem.id, {
+                              zoom: Number(event.target.value),
+                            })
+                          }
+                          className="w-full accent-slate-900"
+                        />
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => removerImagem(imagem.id)}
+                        className="text-left text-xs font-semibold text-slate-500 transition hover:text-main"
+                      >
+                        Remover
+                      </button>
                     </div>
-                    <input
-                      type="range"
-                      min="1"
-                      max="2"
-                      step="0.1"
-                      value={imagem.zoom}
-                      onChange={(event) =>
-                        atualizarImagem(imagem.id, {
-                          zoom: Number(event.target.value),
-                        })
-                      }
-                      className="w-full accent-slate-900"
-                    />
                   </div>
                 </div>
               </article>

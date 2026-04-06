@@ -12,14 +12,13 @@ const epilogue = Epilogue({
 export const metadata: Metadata = {
   metadataBase: new URL("https://visitelapa.com.br"),
   title: {
-    default: "Visite Lapa — Portal Turístico de Bom Jesus da Lapa",
+    default: "Visite Lapa — Portal de Bom Jesus da Lapa",
     template: "%s | Visite Lapa",
   },
   description:
-    "Descubra hotéis, restaurantes, eventos, negócios e experiências turísticas em Bom Jesus da Lapa, Bahia. O portal inteligente da cidade.",
+    "Descubra hotéis, restaurantes, eventos, negócios e conteúdos locais em Bom Jesus da Lapa, Bahia. O portal inteligente da cidade.",
   keywords: [
     "Bom Jesus da Lapa",
-    "turismo",
     "hotéis",
     "restaurantes",
     "eventos",
@@ -27,7 +26,7 @@ export const metadata: Metadata = {
     "Bahia",
     "romaria",
     "santuário",
-    "guia turístico",
+    "guia local",
   ],
   authors: [{ name: "Visite Lapa" }],
   creator: "Visite Lapa",
@@ -36,9 +35,9 @@ export const metadata: Metadata = {
     locale: "pt_BR",
     url: "https://visitelapa.com.br",
     siteName: "Visite Lapa",
-    title: "Visite Lapa — Portal Turístico de Bom Jesus da Lapa",
+    title: "Visite Lapa — Portal de Bom Jesus da Lapa",
     description:
-      "Descubra hotéis, restaurantes, eventos, negócios e experiências turísticas em Bom Jesus da Lapa, Bahia.",
+      "Descubra hotéis, restaurantes, eventos, negócios e conteúdos locais em Bom Jesus da Lapa, Bahia.",
     images: [
       {
         url: "/imagens/img/comercio-local-bom-jesus-da-lapa.webp",
@@ -50,9 +49,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Visite Lapa — Portal Turístico de Bom Jesus da Lapa",
+    title: "Visite Lapa — Portal de Bom Jesus da Lapa",
     description:
-      "Descubra hotéis, restaurantes, eventos, negócios e experiências turísticas em Bom Jesus da Lapa, Bahia.",
+      "Descubra hotéis, restaurantes, eventos, negócios e conteúdos locais em Bom Jesus da Lapa, Bahia.",
     images: ["/imagens/img/comercio-local-bom-jesus-da-lapa.webp"],
   },
   robots: {

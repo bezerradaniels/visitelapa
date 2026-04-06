@@ -16,7 +16,7 @@ export default async function HoteisPagina({ initialFilter }: HoteisPaginaProps)
     <div className="bg-page">
       <HeroListagem
         titulo="Hotéis em Bom Jesus da Lapa"
-        subtitulo="Encontre hospedagens para romarias, turismo, viagens em família e estadias com conforto."
+        subtitulo="Encontre hospedagens para romarias, viagens em família e estadias com conforto."
         imagem={assetsEstaticos.listagens.hoteis}
       />
       <ListagemFiltrada

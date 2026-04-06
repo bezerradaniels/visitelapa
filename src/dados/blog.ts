@@ -1,3 +1,5 @@
+import { ImageFieldValue, StatusEditorial } from "@/tipos/plataforma";
+
 export type SecaoBlog = {
   titulo: string;
   texto: string;
@@ -14,7 +16,10 @@ export type PostBlog = {
   publicadoEm: string;
   leitura: string;
   autor: string;
+  status: StatusEditorial;
   conteudo: string[];
+  conteudoHtml: string;
+  galeria: ImageFieldValue;
   secoes: SecaoBlog[];
   fechamento: string;
   destaqueListagem: string;

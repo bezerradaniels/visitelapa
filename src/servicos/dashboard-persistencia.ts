@@ -1,6 +1,13 @@
 import { PostgrestError } from "@supabase/supabase-js";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { DashboardModuloId, FormValues, ImageFieldValue } from "@/tipos/plataforma";
+import {
+  calcularTempoLeituraBlog,
+  htmlParaParagrafosBlog,
+  normalizarGaleriaBlog,
+  normalizarHtmlBlog,
+} from "./blog-conteudo";
+import { moduloEhTipoCadastro } from "./cadastros";
 
 type ResultadoPersistenciaDashboard = {
   id: string;
@@ -35,11 +42,28 @@ function splitLines(value: FormValues[string]) {
     .filter(Boolean);
 }
 
-function splitParagraphs(value: FormValues[string]) {
+function splitCommaSeparated(value: FormValues[string]) {
   return asString(value)
-    .split(/\n\s*\n/)
+    .split(",")
     .map((item) => item.trim())
     .filter(Boolean);
+}
+
+function montarEndereco(values: FormValues) {
+  const endereco = asString(values.endereco);
+  const numero = asString(values.numero);
+  const bairro = asString(values.bairro);
+  const cidade = asString(values.cidade);
+  const estado = asString(values.estado);
+
+  return [endereco, numero, bairro, cidade, estado].filter(Boolean).join(", ");
+}
+
+function montarLocalEvento(values: FormValues) {
+  const localEvento = asString(values.localEvento);
+  const endereco = montarEndereco(values);
+
+  return [localEvento, endereco].filter(Boolean).join(" - ");
 }
 
 function extrairPrimeiraImagem(value: FormValues[string]) {
@@ -65,6 +89,29 @@ function parseMoeda(value: FormValues[string]) {
 
 function obterStatusPublicacao(values: FormValues, fallback = "rascunho") {
   return asBoolean(values.publicado) ? "publicado" : fallback;
+}
+
+async function resolverPublicadoEmBlog(values: FormValues, slugAtual?: string) {
+  if (!slugAtual) {
+    return asBoolean(values.publicado) ? new Date().toISOString() : null;
+  }
+
+  const supabase = createServerSupabaseClient();
+  const { data, error } = await supabase
+    .from("blog_posts")
+    .select("publicado_em")
+    .eq("slug", slugAtual)
+    .maybeSingle();
+
+  if (error) {
+    throw error;
+  }
+
+  if (typeof data?.publicado_em === "string" && data.publicado_em.trim()) {
+    return data.publicado_em;
+  }
+
+  return asBoolean(values.publicado) ? new Date().toISOString() : null;
 }
 
 async function salvarPorSlug(
@@ -133,6 +180,56 @@ async function salvarContato(values: FormValues, id: string) {
   return { id: String(data.id) };
 }
 
+async function salvarCategoriaCadastro(values: FormValues, idAtual?: string) {
+  const tipoCadastro = asString(values.tipoCadastro);
+
+  if (!moduloEhTipoCadastro(tipoCadastro)) {
+    throw new Error("Selecione o cadastro ao qual esta categoria pertence.");
+  }
+
+  const supabase = createServerSupabaseClient();
+  const payload = {
+    tipo_cadastro: tipoCadastro,
+    nome: asString(values.titulo),
+    slug: asString(values.slug),
+    descricao: asString(values.descricao),
+    status: "publicado",
+  };
+
+  if (idAtual) {
+    const { data, error } = await supabase
+      .from("categorias_cadastro")
+      .update(payload)
+      .eq("id", idAtual)
+      .select("id, slug")
+      .single();
+
+    if (error) {
+      throw error;
+    }
+
+    return {
+      id: String(data.id),
+      slug: typeof data.slug === "string" ? data.slug : undefined,
+    };
+  }
+
+  const { data, error } = await supabase
+    .from("categorias_cadastro")
+    .insert(payload)
+    .select("id, slug")
+    .single();
+
+  if (error) {
+    throw error;
+  }
+
+  return {
+    id: String(data.id),
+    slug: typeof data.slug === "string" ? data.slug : undefined,
+  };
+}
+
 async function obterCidadeBomJesusDaLapaId() {
   const supabase = createServerSupabaseClient();
   const { data, error } = await supabase
@@ -167,9 +264,35 @@ export async function salvarRegistroDashboard(
   modulo: DashboardModuloId,
   values: FormValues,
   slugAtual?: string
-) {
+): Promise<ResultadoPersistenciaDashboard> {
   try {
     switch (modulo) {
+      case "pacotes":
+        return await salvarPorSlug(
+          "pacotes",
+          {
+            slug: asString(values.slug),
+            categoria: asString(values.categoria),
+            titulo: asString(values.titulo),
+            descricao: asString(values.descricao),
+            imagem: extrairPrimeiraImagem(values.capa) || extrairPrimeiraImagem(values.logo),
+            whatsapp: asString(values.whatsapp),
+            instagram: asString(values.instagram),
+            origem_cidade: asString(values.origemCidade),
+            origem_estado: asString(values.origemEstado),
+            destino_cidade: asString(values.destinoCidade),
+            destino_estado: asString(values.destinoEstado),
+            data_ida: asString(values.dataIda),
+            data_retorno: asString(values.dataRetorno),
+            valor_vista: parseMoeda(values.valorVista),
+            valor_parcelado: parseMoeda(values.valorParcelado),
+            parcelas: asNumber(values.parcelas),
+            comodidades: splitCommaSeparated(values.comodidades),
+            valor_final_parcelado: parseMoeda(values.valorFinalParcelado),
+            status: obterStatusPublicacao(values),
+          },
+          slugAtual
+        );
       case "eventos":
         return await salvarPorSlug(
           "eventos",
@@ -182,20 +305,22 @@ export async function salvarRegistroDashboard(
             whatsapp: asString(values.whatsapp),
             instagram: asString(values.instagram),
             data_inicio: asString(values.dataEventoInicio),
-            data_fim: asString(values.dataEventoFim),
-            local: asString(values.localEvento),
-            contato: asString(values.nomeContato),
-            sobre: splitParagraphs(values.sobre),
-            programacao: [],
-            destaques: [],
-            destaque_listagem: asString(values.destaqueListagem),
+            data_fim: asString(values.dataEventoFim) || asString(values.dataEventoInicio),
+            local: montarLocalEvento(values),
+            contato: asString(values.whatsappResponsavel),
+            programacao: splitCommaSeparated(values.horariosEvento),
+            destaques: splitCommaSeparated(values.extrasEvento),
+            destaque_listagem: "",
             valor_ingresso: parseMoeda(values.valorIngresso),
             gratuito: asBoolean(values.eventoGratuito),
             status: obterStatusPublicacao(values),
           },
           slugAtual
         );
-      case "hoteis":
+      case "hoteis": {
+        const comodidades = splitCommaSeparated(values.comodidades);
+        const diferenciais = splitCommaSeparated(values.diferenciais);
+
         return await salvarPorSlug(
           "hoteis",
           {
@@ -206,18 +331,19 @@ export async function salvarRegistroDashboard(
             imagem: extrairPrimeiraImagem(values.capa) || extrairPrimeiraImagem(values.logo),
             whatsapp: asString(values.whatsapp),
             instagram: asString(values.instagram),
-            localizacao: "",
+            localizacao: montarEndereco(values),
             check_in: asString(values.checkIn),
             check_out: asString(values.checkOut),
-            contato: asString(values.nomeContato),
-            sobre: splitParagraphs(values.sobre),
-            comodidades: [],
-            diferenciais: [],
-            destaque_listagem: asString(values.destaqueListagem),
+            contato: asString(values.whatsappResponsavel),
+            comodidades,
+            diferenciais,
+            destaque_listagem:
+              diferenciais[0] ?? comodidades[0] ?? asString(values.categoria),
             status: obterStatusPublicacao(values),
           },
           slugAtual
         );
+      }
       case "negocios":
         return await salvarPorSlug(
           "negocios",
@@ -230,18 +356,20 @@ export async function salvarRegistroDashboard(
             imagem: extrairPrimeiraImagem(values.capa) || extrairPrimeiraImagem(values.logo),
             whatsapp: asString(values.whatsapp),
             instagram: asString(values.instagram),
-            endereco: "",
+            endereco: montarEndereco(values),
             atendimento: "",
-            contato: asString(values.nomeContato),
-            sobre: splitParagraphs(values.sobre),
+            contato: asString(values.whatsappResponsavel),
             especialidades: splitLines(values.descricao),
             diferenciais: [],
-            destaque_listagem: asString(values.destaqueListagem),
+            destaque_listagem: "",
             status: obterStatusPublicacao(values),
           },
           slugAtual
         );
-      case "restaurantes":
+      case "restaurantes": {
+        const especialidades = splitCommaSeparated(values.especialidades);
+        const diferenciais = splitCommaSeparated(values.diferenciais);
+
         return await salvarPorSlug(
           "restaurantes",
           {
@@ -252,40 +380,20 @@ export async function salvarRegistroDashboard(
             imagem: extrairPrimeiraImagem(values.capa) || extrairPrimeiraImagem(values.logo),
             whatsapp: asString(values.whatsapp),
             instagram: asString(values.instagram),
-            endereco: "",
-            funcionamento: "",
-            contato: asString(values.nomeContato),
-            sobre: splitParagraphs(values.sobre),
-            especialidades: splitLines(values.tipoComida),
-            diferenciais: [],
-            destaque_listagem: asString(values.destaqueListagem),
+            endereco: montarEndereco(values),
+            funcionamento: asString(values.funcionamento),
+            contato: asString(values.whatsappResponsavel),
+            especialidades,
+            diferenciais,
+            destaque_listagem: especialidades[0] ?? asString(values.categoria),
             status: obterStatusPublicacao(values),
           },
           slugAtual
         );
-      case "turismo":
-        return await salvarPorSlug(
-          "turismo",
-          {
-            slug: asString(values.slug),
-            categoria: asString(values.categoria),
-            titulo: asString(values.titulo),
-            descricao: asString(values.descricao),
-            imagem: extrairPrimeiraImagem(values.capa) || extrairPrimeiraImagem(values.logo),
-            whatsapp: asString(values.whatsapp),
-            instagram: asString(values.instagram),
-            duracao: asString(values.duracao),
-            formato: asString(values.formato),
-            contato: asString(values.nomeContato),
-            sobre: splitParagraphs(values.sobre),
-            inclui: [],
-            diferenciais: [],
-            destaque_listagem: asString(values.destaqueListagem),
-            status: obterStatusPublicacao(values),
-          },
-          slugAtual
-        );
-      case "blog":
+      }
+      case "blog": {
+        const conteudoHtml = normalizarHtmlBlog(values.conteudo);
+
         return await salvarPorSlug(
           "blog_posts",
           {
@@ -293,17 +401,22 @@ export async function salvarRegistroDashboard(
             categoria: asString(values.categoria),
             titulo: asString(values.titulo),
             descricao: asString(values.descricao),
-            imagem: asString(values.imagem),
-            publicado_em: new Date().toISOString(),
-            leitura: "",
+            imagem: extrairPrimeiraImagem(values.capa) || asString(values.imagem),
+            galeria: normalizarGaleriaBlog(values.galeria),
+            publicado_em: await resolverPublicadoEmBlog(values, slugAtual),
+            leitura: calcularTempoLeituraBlog(conteudoHtml),
             autor: asString(values.autor),
-            conteudo: splitParagraphs(values.conteudo),
+            conteudo: htmlParaParagrafosBlog(conteudoHtml),
+            conteudo_html: conteudoHtml,
             fechamento: "",
             destaque_listagem: "",
             status: obterStatusPublicacao(values),
           },
           slugAtual
         );
+      }
+      case "categorias":
+        return await salvarCategoriaCadastro(values, slugAtual);
       case "cidades":
         return await salvarPorSlug(
           "cidades",

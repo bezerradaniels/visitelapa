@@ -7,6 +7,8 @@ export default function CampoTextarea({
   error,
   onChange,
 }: FieldComponentProps) {
+  const currentValue = String(value ?? "");
+
   return (
     <FieldWrapper
       label={field.label}
@@ -18,11 +20,18 @@ export default function CampoTextarea({
       <textarea
         id={field.name}
         rows={field.rows ?? 4}
-        value={String(value ?? "")}
+        value={currentValue}
+        maxLength={field.maxLength}
         placeholder={field.placeholder}
         onChange={(event) => onChange(field.name, event.target.value)}
-        className="min-h-32 w-full rounded-[32px] border border-slate-200 bg-white px-4 py-3 text-sm text-main outline-none transition placeholder:text-slate-400 focus:border-slate-400"
+        className="min-h-32 w-full rounded-md border border-slate-200 bg-white px-4 py-3 text-sm text-main outline-none transition placeholder:text-slate-400 focus:border-slate-400"
       />
+
+      {field.maxLength ? (
+        <p className="text-right text-xs font-medium text-slate-500">
+          {currentValue.length}/{field.maxLength}
+        </p>
+      ) : null}
     </FieldWrapper>
   );
 }
