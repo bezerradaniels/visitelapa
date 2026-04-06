@@ -1,13 +1,6 @@
 import "./globals.css";
 import type { Metadata } from "next";
 import Script from "next/script";
-import { Epilogue } from "next/font/google";
-
-const epilogue = Epilogue({
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
-  variable: "--font-epilogue",
-});
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://visitelapa.com.br"),
@@ -84,6 +77,12 @@ export default function RootLayout({
   return (
     <html lang="pt-BR">
       <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@300;400;500;600;700&display=swap"
+          rel="stylesheet"
+        />
         {carregarGtm ? (
           <Script id="gtm-script" strategy="lazyOnload">
             {`(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
@@ -94,7 +93,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
           </Script>
         ) : null}
       </head>
-      <body className={`${epilogue.variable} font-sans bg-page text-main antialiased`}>
+      <body className="font-sans bg-page text-main antialiased">
         {carregarGtm ? (
           <noscript>
             <iframe

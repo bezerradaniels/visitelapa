@@ -4,6 +4,7 @@ import {
   BookOpen01Icon,
   Building03Icon,
   Calendar03Icon,
+  CircleArrowRight01Icon,
   Hotel01Icon,
   Restaurant01Icon,
   Ticket01Icon,
@@ -77,7 +78,7 @@ export default function AtalhosPortal() {
           <Link
             key={atalho.href}
             href={atalho.href}
-            className="group rounded-[32px] border border-gray-200 bg-white p-6 transition hover:-translate-y-0.5 hover:border-gray-300"
+            className="group rounded-4xl border border-gray-200 bg-white p-6 transition hover:-translate-y-0.5 hover:border-gray-300"
           >
             <div className="flex items-start justify-between gap-4">
               <span className="inline-flex rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700">
@@ -103,6 +104,11 @@ export default function AtalhosPortal() {
             <p className="mt-2 text-sm leading-6 text-gray-600">
               {atalho.descricao}
             </p>
+
+            <div className="mt-4 flex items-center gap-1.5 text-sm font-medium" style={{ color: "#0ea5e9" }}>
+              Saiba mais
+              <Icone icon={CircleArrowRight01Icon} size={16} />
+            </div>
           </Link>
         ))}
       </div>

@@ -19,11 +19,11 @@
   --shadow-2xl: none;
   --shadow-inner: none;
 
-  --font-sans: var(--font-epilogue), "Epilogue", sans-serif;
+  --font-sans: "Google Sans", sans-serif;
 }
 
 body {
-  font-family: var(--font-epilogue), "Epilogue", ui-sans-serif, system-ui, sans-serif;
+  font-family: "Google Sans", sans-serif;
   background-color: var(--color-page);
   color: var(--color-main);
 }
