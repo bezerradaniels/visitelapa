@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import BarraFiltros from "@/componentes/filtros/barra-filtros";
 import GradeCards from "@/componentes/listagem/grade-cards";
 import CardListagem from "@/componentes/cards/card-listagem";
+import CardNegocioPlay from "@/componentes/cards/card-negocio-play";
 import CampoBusca from "@/componentes/ui/campo-busca";
 import Paginacao from "@/componentes/listagem/paginacao";
 
@@ -14,6 +15,7 @@ type ItemListagem = {
   titulo: string;
   descricao: string;
   destaqueListagem: string;
+  logo?: string;
 };
 
 type Props = {
@@ -21,6 +23,7 @@ type Props = {
   itens: ItemListagem[];
   baseHref: string;
   initialFilter?: string;
+  variant?: "default" | "negocios-play";
 };
 
 const ITENS_POR_PAGINA = 6;
@@ -42,6 +45,7 @@ type ConteudoProps = {
   itens: ItemListagem[];
   baseHref: string;
   initialFilter: string;
+  variant: "default" | "negocios-play";
 };
 
 function ListagemFiltradaConteudo({
@@ -49,6 +53,7 @@ function ListagemFiltradaConteudo({
   itens,
   baseHref,
   initialFilter,
+  variant,
 }: ConteudoProps) {
   const [filtroAtivo, setFiltroAtivo] = useState(initialFilter);
   const [termoBusca, setTermoBusca] = useState("");
@@ -102,14 +107,25 @@ function ListagemFiltradaConteudo({
         <>
           <GradeCards>
             {itensDaPagina.map((item) => (
-              <CardListagem
-                key={item.slug}
-                href={`${baseHref}/${item.slug}`}
-                tag={item.categoria}
-                destaque={item.destaqueListagem}
-                titulo={item.titulo}
-                descricao={item.descricao}
-              />
+              variant === "negocios-play" ? (
+                <CardNegocioPlay
+                  key={item.slug}
+                  href={`${baseHref}/${item.slug}`}
+                  label={item.categoria}
+                  titulo={item.titulo}
+                  descricao={item.descricao}
+                  logo={item.logo}
+                />
+              ) : (
+                <CardListagem
+                  key={item.slug}
+                  href={`${baseHref}/${item.slug}`}
+                  tag={item.categoria}
+                  destaque={item.destaqueListagem}
+                  titulo={item.titulo}
+                  descricao={item.descricao}
+                />
+              )
             ))}
           </GradeCards>
           {totalPaginas > 1 && (
@@ -133,6 +149,7 @@ export default function ListagemFiltrada({
   itens,
   baseHref,
   initialFilter,
+  variant = "default",
 }: Props) {
   const filtroInicial = resolverFiltroInicial(filtros, initialFilter);
 
@@ -145,6 +162,7 @@ export default function ListagemFiltrada({
           itens={itens}
           baseHref={baseHref}
           initialFilter={filtroInicial}
+          variant={variant}
         />
       }
     >
@@ -153,6 +171,7 @@ export default function ListagemFiltrada({
         itens={itens}
         baseHref={baseHref}
         initialFilter={initialFilter}
+        variant={variant}
       />
     </Suspense>
   );
@@ -163,6 +182,7 @@ function ListagemFiltradaComSearchParams({
   itens,
   baseHref,
   initialFilter,
+  variant = "default",
 }: Props) {
   const searchParams = useSearchParams();
   const filtroDaUrl = searchParams.get("filtro") ?? initialFilter;
@@ -175,6 +195,7 @@ function ListagemFiltradaComSearchParams({
       itens={itens}
       baseHref={baseHref}
       initialFilter={filtroInicial}
+      variant={variant}
     />
   );
 }

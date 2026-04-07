@@ -28,7 +28,7 @@ export default function MenuMobile({ items }: MenuMobileProps) {
         onClick={() => setAberto((atual) => !atual)}
         aria-expanded={aberto}
         aria-label={aberto ? "Fechar menu" : "Abrir menu"}
-        className="inline-flex cursor-pointer items-center justify-center rounded-[32px] border border-gray-200 p-3 text-gray-700 transition hover:border-gray-300 hover:text-main"
+        className="inline-flex cursor-pointer items-center justify-center rounded-[32px] border border-gray-200 p-2.5 text-gray-700 transition hover:border-gray-300 hover:text-main"
       >
         <Icone
           icon={aberto ? Cancel01Icon : Menu01Icon}
@@ -37,7 +37,7 @@ export default function MenuMobile({ items }: MenuMobileProps) {
       </button>
 
       {aberto ? (
-        <div className="absolute inset-x-0 top-full z-40 border-b border-gray-200 bg-white">
+        <div className="absolute inset-x-0 top-full z-40 border-b border-gray-200 bg-page">
           <Container>
             <div className="flex flex-col gap-6 py-6">
               <nav className="grid gap-4">

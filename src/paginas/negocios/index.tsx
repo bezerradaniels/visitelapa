@@ -25,6 +25,7 @@ export default async function NegociosPagina({ initialFilter }: NegociosPaginaPr
         itens={itens}
         baseHref="/negocios"
         initialFilter={initialFilter}
+        variant="negocios-play"
       />
     </div>
   );

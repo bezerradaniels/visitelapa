@@ -12,7 +12,7 @@ export default function Header() {
   return (
     <header className="relative border-b border-gray-200 bg-page">
       <Container>
-        <div className="flex min-h-16 items-center justify-between gap-4 py-3">
+        <div className="flex min-h-11 items-center justify-between gap-4 py-2 lg:min-h-16 lg:py-3">
           <Link
             href="/"
             className="inline-flex items-center gap-3 text-lg font-bold text-main"
@@ -22,7 +22,7 @@ export default function Header() {
               alt="Visite Lapa"
               width={240}
               height={64}
-              className="h-16 w-auto"
+              className="h-10 w-auto lg:h-16"
             />
           </Link>
 

@@ -31,7 +31,6 @@ function obterFallbackAvatar(valor?: string) {
 }
 
 export default function LayoutDetalhe({
-  categoria,
   titulo,
   descricao,
   imagem,
@@ -60,42 +59,50 @@ export default function LayoutDetalhe({
 
         <div className="relative z-20">
           <Container>
-            <div className="flex min-h-90 flex-col justify-end py-16">
-              <div className={`max-w-5xl ${temAvatar ? "md:flex md:items-end md:gap-6" : ""}`}>
+            <div className="flex min-h-[18rem] flex-col justify-center py-10 md:min-h-[20rem] md:py-12">
+              <div className="max-w-5xl">
                 {temAvatar ? (
-                  <div className="mb-6 shrink-0 md:mb-0">
-                    <div className="flex h-28 w-28 items-center justify-center overflow-hidden rounded-full border-4 border-white/85 bg-gradient-to-br from-slate-100 to-white text-3xl font-semibold tracking-tight text-main shadow-[0_18px_45px_-18px_rgba(15,23,42,0.8)] md:h-36 md:w-36 md:text-4xl">
-                      {avatarSrc ? (
-                        <img
-                          src={avatarSrc}
-                          alt={avatarAlt ?? titulo}
-                          className="h-full w-full object-cover"
-                        />
-                      ) : (
-                        <span>{fallback}</span>
-                      )}
+                  <div className="flex items-center gap-4 md:gap-5">
+                    <div className="shrink-0">
+                      <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border-4 border-white/85 bg-gradient-to-br from-slate-100 to-white text-2xl font-semibold tracking-tight text-main shadow-[0_18px_45px_-18px_rgba(15,23,42,0.8)] md:h-24 md:w-24 md:text-3xl">
+                        {avatarSrc ? (
+                          <img
+                            src={avatarSrc}
+                            alt={avatarAlt ?? titulo}
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <span>{fallback}</span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex min-w-0 flex-col justify-center">
+                      <h1 className="max-w-4xl text-3xl font-bold tracking-tight text-white md:text-4xl">
+                        {titulo}
+                      </h1>
+
+                      <p className="mt-1.5 max-w-2xl text-base leading-7 text-gray-100 md:mt-2 md:text-lg">
+                        {descricao}
+                      </p>
                     </div>
                   </div>
-                ) : null}
+                ) : (
+                  <div>
+                    <h1 className="max-w-4xl text-3xl font-bold tracking-tight text-white md:text-4xl">
+                      {titulo}
+                    </h1>
 
-                <div>
-                  <span className="inline-flex w-fit rounded-full bg-white/90 px-3 py-1 text-xs font-medium text-main/90">
-                    {categoria}
-                  </span>
+                    <p className="mt-1.5 max-w-2xl text-base leading-7 text-gray-100 md:mt-2 md:text-lg">
+                      {descricao}
+                    </p>
+                  </div>
+                )}
 
-                  <h1 className="mt-4 max-w-4xl text-4xl font-bold tracking-tight text-white md:text-5xl">
-                    {titulo}
-                  </h1>
-
-                  <p className="mt-4 max-w-2xl text-base leading-7 text-gray-100 md:text-lg">
-                    {descricao}
-                  </p>
-
-                  <SocialButtons
-                    whatsapp={whatsapp}
-                    instagram={instagram}
-                  />
-                </div>
+                <SocialButtons
+                  whatsapp={whatsapp}
+                  instagram={instagram}
+                />
               </div>
             </div>
           </Container>
