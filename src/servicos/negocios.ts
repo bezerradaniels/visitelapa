@@ -1,6 +1,6 @@
 import { Negocio } from "@/dados/negocios";
 import { supabase } from "@/lib/supabase";
-import { criarFiltrosPorCategoria } from "./utils";
+import { criarServico } from "./utils";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function mapRow(row: any): Negocio {
@@ -24,26 +24,15 @@ function mapRow(row: any): Negocio {
   };
 }
 
-export async function listarNegocios(): Promise<Negocio[]> {
-  const { data, error } = await supabase
-    .from("negocios")
-    .select("*")
-    .eq("status", "publicado")
-    .order("atualizado_em", { ascending: false });
-  if (error) throw error;
-  return (data ?? []).map(mapRow);
-}
+const servico = criarServico<Negocio>({
+  tabela: "negocios",
+  ordem: { coluna: "atualizado_em" },
+  mapRow,
+});
 
-export async function buscarNegocioPorSlug(slug: string): Promise<Negocio | undefined> {
-  const { data, error } = await supabase
-    .from("negocios")
-    .select("*")
-    .eq("slug", slug)
-    .eq("status", "publicado")
-    .maybeSingle();
-  if (error) throw error;
-  return data ? mapRow(data) : undefined;
-}
+export const listarNegocios = servico.listar;
+export const buscarNegocioPorSlug = servico.buscarPorSlug;
+export const listarFiltrosNegocios = servico.listarFiltros;
 
 export async function buscarNegocioPorUsername(username: string): Promise<Negocio | undefined> {
   const { data, error } = await supabase
@@ -65,9 +54,4 @@ export async function buscarNegocioPorSlugOuUsername(identifier: string): Promis
     .maybeSingle();
   if (error) throw error;
   return data ? mapRow(data) : undefined;
-}
-
-export async function listarFiltrosNegocios() {
-  const itens = await listarNegocios();
-  return criarFiltrosPorCategoria(itens);
 }

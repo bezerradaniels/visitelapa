@@ -887,6 +887,43 @@ export async function validarUsernameNegocio(username: string, currentUsername?:
   return undefined;
 }
 
+export function campoPreenchido(field: FormFieldDefinition, values: FormValues) {
+  if (field.readOnly) {
+    return true;
+  }
+
+  if (field.name === "valorIngresso" && values.eventoGratuito === true) {
+    return true;
+  }
+
+  if (field.kind === "switch" || field.kind === "checkbox") {
+    return Boolean(values[field.name]);
+  }
+
+  if (field.kind === "date-range") {
+    const startName = field.startName ?? `${field.name}Inicio`;
+    const endName = field.endName ?? `${field.name}Fim`;
+    const isSingleDay = field.singleDayFieldName
+      ? values[field.singleDayFieldName] === true
+      : false;
+
+    return isSingleDay
+      ? Boolean(values[startName])
+      : Boolean(values[startName] && values[endName]);
+  }
+
+  if (field.kind === "image-single" || field.kind === "image-gallery") {
+    const fieldValue = values[field.name];
+    return Array.isArray(fieldValue) && fieldValue.length > 0;
+  }
+
+  if (field.kind === "rich-text") {
+    return extrairTextoHtmlBlog(values[field.name]).trim().length > 0;
+  }
+
+  return String(values[field.name] ?? "").trim().length > 0;
+}
+
 export function validarCamposObrigatorios(
   campos: FormFieldDefinition[],
   values: FormValues

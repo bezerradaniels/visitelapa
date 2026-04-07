@@ -1,6 +1,5 @@
 import { Hotel } from "@/dados/hoteis";
-import { supabase } from "@/lib/supabase";
-import { criarFiltrosPorCategoria } from "./utils";
+import { criarServico } from "./utils";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function mapRow(row: any): Hotel {
@@ -27,28 +26,12 @@ function mapRow(row: any): Hotel {
   };
 }
 
-export async function listarHoteis(): Promise<Hotel[]> {
-  const { data, error } = await supabase
-    .from("hoteis")
-    .select("*")
-    .eq("status", "publicado")
-    .order("atualizado_em", { ascending: false });
-  if (error) throw error;
-  return (data ?? []).map(mapRow);
-}
+const servico = criarServico<Hotel>({
+  tabela: "hoteis",
+  ordem: { coluna: "atualizado_em" },
+  mapRow,
+});
 
-export async function buscarHotelPorSlug(slug: string): Promise<Hotel | undefined> {
-  const { data, error } = await supabase
-    .from("hoteis")
-    .select("*")
-    .eq("slug", slug)
-    .eq("status", "publicado")
-    .maybeSingle();
-  if (error) throw error;
-  return data ? mapRow(data) : undefined;
-}
-
-export async function listarFiltrosHoteis() {
-  const itens = await listarHoteis();
-  return criarFiltrosPorCategoria(itens);
-}
+export const listarHoteis = servico.listar;
+export const buscarHotelPorSlug = servico.buscarPorSlug;
+export const listarFiltrosHoteis = servico.listarFiltros;

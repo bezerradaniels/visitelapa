@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import Hero from "@/componentes/secoes/hero";
 import AtalhosPortal from "@/componentes/secoes/atalhos-portal";
 import DestaquesHome from "@/componentes/secoes/destaques-home";
@@ -13,11 +14,21 @@ export default function HomePagina() {
       <Hero />
       <AtalhosPortal />
       <DestaquesHome />
-      <EventosHome />
-      <HoteisHome />
-      <NegociosHome />
-      <RestaurantesHome />
-      <BlogHome />
+      <Suspense>
+        <EventosHome />
+      </Suspense>
+      <Suspense>
+        <HoteisHome />
+      </Suspense>
+      <Suspense>
+        <NegociosHome />
+      </Suspense>
+      <Suspense>
+        <RestaurantesHome />
+      </Suspense>
+      <Suspense>
+        <BlogHome />
+      </Suspense>
     </>
   );
 }

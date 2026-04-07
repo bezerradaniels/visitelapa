@@ -15,6 +15,7 @@ type ItemListagem = {
   titulo: string;
   descricao: string;
   destaqueListagem: string;
+  imagem?: string;
   logo?: string;
 };
 
@@ -124,6 +125,7 @@ function ListagemFiltradaConteudo({
                   destaque={item.destaqueListagem}
                   titulo={item.titulo}
                   descricao={item.descricao}
+                  imagem={item.imagem}
                 />
               )
             ))}

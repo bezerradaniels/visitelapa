@@ -1,5 +1,6 @@
 "use client";
 
+import type { ComponentType } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
@@ -17,16 +18,35 @@ import CampoTags from "@/componentes/dashboard/fields/campo-tags";
 import CampoTextoArray from "@/componentes/dashboard/fields/campo-texto-array";
 import CampoTextarea from "@/componentes/dashboard/fields/campo-textarea";
 import CampoTexto from "@/componentes/dashboard/fields/campo-texto";
+import { FieldComponentProps } from "@/componentes/dashboard/fields/types";
 import FormGrupo from "@/componentes/dashboard/form-grupo";
-import { extrairTextoHtmlBlog } from "@/servicos/blog-conteudo";
+import { FieldKind } from "@/tipos/plataforma";
 import { aplicarFormatacoesCadastro } from "@/servicos/formulario-formatacao";
 import {
+  campoPreenchido,
   criarValoresIniciais,
   moduloEhTipoCadastro,
   validarCamposObrigatorios,
   validarUsernameNegocio,
 } from "@/servicos/cadastros";
 import { FormFieldDefinition, FormValue, FormValues } from "@/tipos/plataforma";
+
+const CAMPO_POR_TIPO: Partial<Record<FieldKind, ComponentType<FieldComponentProps>>> = {
+  textarea: CampoTextarea,
+  "rich-text": CampoRichText,
+  select: CampoSelect,
+  "checkbox-group": CampoCheckboxGrupo,
+  checkbox: CampoCheckbox,
+  switch: CampoSwitch,
+  date: CampoData,
+  "date-range": CampoIntervaloData,
+  currency: CampoMoeda,
+  number: CampoNumero,
+  tags: CampoTags,
+  "text-array": CampoTextoArray,
+  "image-single": CampoImagem,
+  "image-gallery": CampoImagem,
+};
 
 type FormularioAdminProps = {
   modulo?: string;
@@ -60,41 +80,6 @@ function criarSlugAutomatico(value: FormValue) {
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "")
     .slice(0, 80);
-}
-
-function campoPreenchido(field: FormFieldDefinition, values: FormValues) {
-  if (field.readOnly) {
-    return true;
-  }
-
-  if (field.name === "valorIngresso" && values.eventoGratuito === true) {
-    return true;
-  }
-
-  if (field.kind === "switch" || field.kind === "checkbox") {
-    return Boolean(values[field.name]);
-  }
-
-  if (field.kind === "date-range") {
-    const startName = field.startName ?? `${field.name}Inicio`;
-    const endName = field.endName ?? `${field.name}Fim`;
-    const isSingleDay = field.singleDayFieldName
-      ? values[field.singleDayFieldName] === true
-      : false;
-
-    return isSingleDay ? Boolean(values[startName]) : Boolean(values[startName] && values[endName]);
-  }
-
-  if (field.kind === "image-single" || field.kind === "image-gallery") {
-    const fieldValue = values[field.name];
-    return Array.isArray(fieldValue) && fieldValue.length > 0;
-  }
-
-  if (field.kind === "rich-text") {
-    return extrairTextoHtmlBlog(values[field.name]).trim().length > 0;
-  }
-
-  return String(values[field.name] ?? "").trim().length > 0;
 }
 
 function normalizarValoresFormulario(fields: FormFieldDefinition[], values: FormValues) {
@@ -162,51 +147,8 @@ function normalizarOpcoesCategoria(value: unknown): FormFieldDefinition["options
   return options.length ? options : undefined;
 }
 
-export default function FormularioAdmin({
-  modulo,
-  registroId,
-  fields,
-  initialValues,
-  submitLabel,
-  successTitle,
-  successDescription,
-  variant = "dashboard",
-  currentUsername,
-  submitPath,
-  submitBody,
-  successRedirectHref,
-}: FormularioAdminProps) {
-  const router = useRouter();
-  const [values, setValues] = useState<FormValues>(() =>
-    criarValoresIniciais(fields, initialValues)
-  );
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  const [submittedValues, setSubmittedValues] = useState<FormValues | null>(null);
-  const [submitError, setSubmitError] = useState<string | null>(null);
+function useCategoriaOptions(modulo: string | undefined, hasCategoriaField: boolean) {
   const [categoriaOptions, setCategoriaOptions] = useState<FormFieldDefinition["options"]>();
-  const [isPending, startTransition] = useTransition();
-  const hasCategoriaField = fields.some((field) => field.name === "categoria");
-  const fieldsResolvidos = fields.map((field) => {
-    if (field.name !== "categoria" || !categoriaOptions?.length) {
-      return field;
-    }
-
-    return {
-      ...field,
-      options: categoriaOptions,
-    };
-  });
-  const termsField = fieldsResolvidos.find((field) => field.name === "aceitaTermos");
-  const sections = groupFieldsBySection(
-    fieldsResolvidos.filter((field) => field.name !== "aceitaTermos")
-  );
-  const camposParaProgresso = fieldsResolvidos.filter(
-    (field) => field.name !== "aceitaTermos" && !field.readOnly
-  );
-  const preenchidos = camposParaProgresso.filter((field) => campoPreenchido(field, values)).length;
-  const progresso = camposParaProgresso.length
-    ? Math.round((preenchidos / camposParaProgresso.length) * 100)
-    : 0;
 
   useEffect(() => {
     if (!modulo || !moduloEhTipoCadastro(modulo) || !hasCategoriaField) {
@@ -221,7 +163,7 @@ export default function FormularioAdmin({
           cache: "no-store",
         });
 
-        if (!response.ok) {
+        if (!response.ok || !ativo) {
           return;
         }
 
@@ -244,6 +186,55 @@ export default function FormularioAdmin({
       ativo = false;
     };
   }, [hasCategoriaField, modulo]);
+
+  return categoriaOptions;
+}
+
+export default function FormularioAdmin({
+  modulo,
+  registroId,
+  fields,
+  initialValues,
+  submitLabel,
+  successTitle,
+  successDescription,
+  variant = "dashboard",
+  currentUsername,
+  submitPath,
+  submitBody,
+  successRedirectHref,
+}: FormularioAdminProps) {
+  const router = useRouter();
+  const [values, setValues] = useState<FormValues>(() =>
+    criarValoresIniciais(fields, initialValues)
+  );
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [submittedValues, setSubmittedValues] = useState<FormValues | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
+  const hasCategoriaField = fields.some((field) => field.name === "categoria");
+  const categoriaOptions = useCategoriaOptions(modulo, hasCategoriaField);
+  const fieldsResolvidos = fields.map((field) => {
+    if (field.name !== "categoria" || !categoriaOptions?.length) {
+      return field;
+    }
+
+    return {
+      ...field,
+      options: categoriaOptions,
+    };
+  });
+  const termsField = fieldsResolvidos.find((field) => field.name === "aceitaTermos");
+  const sections = groupFieldsBySection(
+    fieldsResolvidos.filter((field) => field.name !== "aceitaTermos")
+  );
+  const camposParaProgresso = fieldsResolvidos.filter(
+    (field) => field.name !== "aceitaTermos" && !field.readOnly
+  );
+  const preenchidos = camposParaProgresso.filter((field) => campoPreenchido(field, values)).length;
+  const progresso = camposParaProgresso.length
+    ? Math.round((preenchidos / camposParaProgresso.length) * 100)
+    : 0;
 
   function handleChange(name: string, value: FormValue) {
     setValues((current) => {
@@ -331,37 +322,8 @@ export default function FormularioAdmin({
       onChange: handleChange,
     };
 
-    switch (fieldAjustado.kind) {
-      case "textarea":
-        return <CampoTextarea {...props} />;
-      case "rich-text":
-        return <CampoRichText {...props} />;
-      case "select":
-        return <CampoSelect {...props} />;
-      case "checkbox-group":
-        return <CampoCheckboxGrupo {...props} />;
-      case "checkbox":
-        return <CampoCheckbox {...props} />;
-      case "switch":
-        return <CampoSwitch {...props} />;
-      case "date":
-        return <CampoData {...props} />;
-      case "date-range":
-        return <CampoIntervaloData {...props} />;
-      case "currency":
-        return <CampoMoeda {...props} />;
-      case "number":
-        return <CampoNumero {...props} />;
-      case "tags":
-        return <CampoTags {...props} />;
-      case "text-array":
-        return <CampoTextoArray {...props} />;
-      case "image-single":
-      case "image-gallery":
-        return <CampoImagem {...props} />;
-      default:
-        return <CampoTexto {...props} />;
-    }
+    const Componente = CAMPO_POR_TIPO[fieldAjustado.kind] ?? CampoTexto;
+    return <Componente {...props} />;
   }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {

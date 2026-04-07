@@ -1,6 +1,5 @@
 import { Restaurante } from "@/dados/restaurantes";
-import { supabase } from "@/lib/supabase";
-import { criarFiltrosPorCategoria } from "./utils";
+import { criarServico } from "./utils";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function mapRow(row: any): Restaurante {
@@ -23,28 +22,12 @@ function mapRow(row: any): Restaurante {
   };
 }
 
-export async function listarRestaurantes(): Promise<Restaurante[]> {
-  const { data, error } = await supabase
-    .from("restaurantes")
-    .select("*")
-    .eq("status", "publicado")
-    .order("atualizado_em", { ascending: false });
-  if (error) throw error;
-  return (data ?? []).map(mapRow);
-}
+const servico = criarServico<Restaurante>({
+  tabela: "restaurantes",
+  ordem: { coluna: "atualizado_em" },
+  mapRow,
+});
 
-export async function buscarRestaurantePorSlug(slug: string): Promise<Restaurante | undefined> {
-  const { data, error } = await supabase
-    .from("restaurantes")
-    .select("*")
-    .eq("slug", slug)
-    .eq("status", "publicado")
-    .maybeSingle();
-  if (error) throw error;
-  return data ? mapRow(data) : undefined;
-}
-
-export async function listarFiltrosRestaurantes() {
-  const itens = await listarRestaurantes();
-  return criarFiltrosPorCategoria(itens);
-}
+export const listarRestaurantes = servico.listar;
+export const buscarRestaurantePorSlug = servico.buscarPorSlug;
+export const listarFiltrosRestaurantes = servico.listarFiltros;
