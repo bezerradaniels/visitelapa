@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import HomePagina from "@/paginas/home";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Visite Lapa — Portal de Bom Jesus da Lapa",
   description:

@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import RestaurantesPagina from "@/paginas/restaurantes";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Restaurantes",
   description:

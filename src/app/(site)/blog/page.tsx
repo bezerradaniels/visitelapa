@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import BlogPagina from "@/paginas/blog";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Blog",
   description:
