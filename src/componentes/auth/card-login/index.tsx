@@ -2,7 +2,6 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import {
   LockPasswordIcon,
@@ -12,11 +11,33 @@ import Icone from "@/componentes/ui/icone";
 import { assetsEstaticos } from "@/dados/assets";
 
 export default function CardLogin() {
-  const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [erro, setErro] = useState<string | null>(null);
+
+  function espelharSessaoDashboard(response: Response) {
+    const sessao = response.headers.get("x-dashboard-session");
+    const nomeCookie = response.headers.get("x-dashboard-cookie-name");
+    const maxAge = response.headers.get("x-dashboard-cookie-max-age");
+
+    if (!sessao || !nomeCookie || !maxAge || sessao === "set") {
+      return;
+    }
+
+    const atributos = [
+      `${nomeCookie}=${encodeURIComponent(sessao)}`,
+      "Path=/",
+      `Max-Age=${maxAge}`,
+      "SameSite=Lax",
+    ];
+
+    if (window.location.protocol === "https:") {
+      atributos.push("Secure");
+    }
+
+    document.cookie = atributos.join("; ");
+  }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -42,8 +63,8 @@ export default function CardLogin() {
           }
 
           setErro(null);
-          router.push("/dashboard");
-          router.refresh();
+          espelharSessaoDashboard(response);
+          window.location.assign("/dashboard");
         } catch {
           setErro("Não foi possível conectar ao servidor de autenticação.");
         }

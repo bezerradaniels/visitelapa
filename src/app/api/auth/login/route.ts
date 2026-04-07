@@ -26,9 +26,19 @@ function tentarAutenticarSupabase(email: string, senha: string) {
   return supabase.auth.signInWithPassword({ email, password: senha });
 }
 
+function obterDominioCookie(request: NextRequest) {
+  const host = request.headers.get("host") ?? "";
+  const dominio = host.split(":")[0];
+  if (dominio === "localhost" || dominio.startsWith("127.") || dominio.startsWith("0.")) {
+    return undefined;
+  }
+  return dominio.replace(/^www\./, ".");
+}
+
 function definirCookieAdmin(
   response: NextResponse,
-  sessao: string
+  sessao: string,
+  request: NextRequest
 ) {
   const cookieConfig = obterCookieDashboardAdmin();
   response.cookies.set(cookieConfig.nome, sessao, {
@@ -37,7 +47,19 @@ function definirCookieAdmin(
     sameSite: "lax",
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
+    domain: obterDominioCookie(request),
   });
+}
+
+function anexarMetadadosSessaoDashboard(response: NextResponse, sessao: string) {
+  const cookieConfig = obterCookieDashboardAdmin();
+
+  response.headers.set("x-dashboard-cookie-name", cookieConfig.nome);
+  response.headers.set("x-dashboard-cookie-max-age", String(cookieConfig.duracaoSegundos));
+  response.headers.set(
+    "x-dashboard-session",
+    process.env.NODE_ENV === "production" ? "set" : sessao
+  );
 }
 
 export async function POST(request: NextRequest) {
@@ -58,14 +80,13 @@ export async function POST(request: NextRequest) {
     if (authPromise) {
       const { data, error } = await authPromise;
       if (!error && data.user) {
+        const sessao = criarSessaoDashboard({
+          identificador: data.user.email ?? email,
+          origem: "supabase",
+        });
         const response = NextResponse.json({ sucesso: true });
-        definirCookieAdmin(
-          response,
-          criarSessaoDashboard({
-            identificador: data.user.email ?? email,
-            origem: "supabase",
-          })
-        );
+        definirCookieAdmin(response, sessao, request);
+        anexarMetadadosSessaoDashboard(response, sessao);
         return response;
       }
     }
@@ -75,14 +96,13 @@ export async function POST(request: NextRequest) {
 
   // 2. Fallback: credenciais administrativas temporárias
   if (validarCredenciaisDashboardTemporarias(email, senha)) {
+    const sessao = criarSessaoDashboard({
+      identificador: email,
+      origem: "temporario",
+    });
     const response = NextResponse.json({ sucesso: true });
-    definirCookieAdmin(
-      response,
-      criarSessaoDashboard({
-        identificador: email,
-        origem: "temporario",
-      })
-    );
+    definirCookieAdmin(response, sessao, request);
+    anexarMetadadosSessaoDashboard(response, sessao);
     return response;
   }
 

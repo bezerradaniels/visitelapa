@@ -1,6 +1,6 @@
 import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
 import { ReactNode } from "react";
+import RedirecionarLogin from "@/componentes/auth/redirecionar-login";
 import Sidebar from "@/componentes/dashboard/sidebar";
 import {
   cookieDashboardAutoriza,
@@ -20,7 +20,7 @@ export default async function DashboardLayout({
   const autorizado = cookieDashboardAutoriza(cookieStore.get(cookieConfig.nome)?.value);
 
   if (!autorizado) {
-    redirect("/login");
+    return <RedirecionarLogin />;
   }
 
   const aprovacoesPendentes = await contarSolicitacoesPendentes();
