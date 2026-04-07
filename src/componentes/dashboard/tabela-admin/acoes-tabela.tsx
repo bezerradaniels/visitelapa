@@ -71,6 +71,7 @@ export default function AcoesTabela({ actions }: AcoesTabelaProps) {
     try {
       const response = await fetch(action.actionPath, {
         method: "POST",
+        credentials: "include",
         headers: {
           "Content-Type": "application/json",
         },

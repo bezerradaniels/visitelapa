@@ -2,7 +2,10 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { ReactNode } from "react";
 import Sidebar from "@/componentes/dashboard/sidebar";
-import { obterCookieDashboardAdmin } from "@/servicos/admin-auth";
+import {
+  cookieDashboardAutoriza,
+  obterCookieDashboardAdmin,
+} from "@/servicos/admin-auth";
 import { contarSolicitacoesPendentes } from "@/servicos/solicitacoes-publicas";
 
 type DashboardLayoutProps = {
@@ -14,8 +17,7 @@ export default async function DashboardLayout({
 }: DashboardLayoutProps) {
   const cookieConfig = obterCookieDashboardAdmin();
   const cookieStore = await cookies();
-  const autorizado =
-    cookieStore.get(cookieConfig.nome)?.value === cookieConfig.valorAutorizado;
+  const autorizado = cookieDashboardAutoriza(cookieStore.get(cookieConfig.nome)?.value);
 
   if (!autorizado) {
     redirect("/login");

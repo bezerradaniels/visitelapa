@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { obterCookieDashboardAdmin } from "@/servicos/admin-auth";
+import {
+  cookieDashboardAutoriza,
+  obterCookieDashboardAdmin,
+} from "@/servicos/admin-auth";
 import { executarAcaoSolicitacaoPublica } from "@/servicos/solicitacoes-publicas";
 import { FormValues, PublicSubmissionAction } from "@/tipos/plataforma";
 
@@ -13,7 +16,7 @@ const ACOES_VALIDAS = new Set<PublicSubmissionAction>([
 
 function validarAcessoAdmin(request: NextRequest) {
   const cookieConfig = obterCookieDashboardAdmin();
-  return request.cookies.get(cookieConfig.nome)?.value === cookieConfig.valorAutorizado;
+  return cookieDashboardAutoriza(request.cookies.get(cookieConfig.nome)?.value);
 }
 
 function extrairValores(body: unknown) {

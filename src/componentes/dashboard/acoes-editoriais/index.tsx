@@ -97,6 +97,7 @@ export default function AcoesEditoriais({
         try {
           const response = await fetch(actionPath, {
             method: "POST",
+            credentials: "include",
             headers: {
               "Content-Type": "application/json",
             },

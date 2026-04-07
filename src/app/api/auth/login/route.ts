@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import {
+  criarSessaoDashboard,
   obterCookieDashboardAdmin,
   validarCredenciaisDashboardTemporarias,
 } from "@/servicos/admin-auth";
@@ -25,9 +26,12 @@ function tentarAutenticarSupabase(email: string, senha: string) {
   return supabase.auth.signInWithPassword({ email, password: senha });
 }
 
-function definirCookieAdmin(response: NextResponse) {
+function definirCookieAdmin(
+  response: NextResponse,
+  sessao: string
+) {
   const cookieConfig = obterCookieDashboardAdmin();
-  response.cookies.set(cookieConfig.nome, cookieConfig.valorAutorizado, {
+  response.cookies.set(cookieConfig.nome, sessao, {
     path: "/",
     maxAge: cookieConfig.duracaoSegundos,
     sameSite: "lax",
@@ -55,7 +59,13 @@ export async function POST(request: NextRequest) {
       const { data, error } = await authPromise;
       if (!error && data.user) {
         const response = NextResponse.json({ sucesso: true });
-        definirCookieAdmin(response);
+        definirCookieAdmin(
+          response,
+          criarSessaoDashboard({
+            identificador: data.user.email ?? email,
+            origem: "supabase",
+          })
+        );
         return response;
       }
     }
@@ -66,7 +76,13 @@ export async function POST(request: NextRequest) {
   // 2. Fallback: credenciais administrativas temporárias
   if (validarCredenciaisDashboardTemporarias(email, senha)) {
     const response = NextResponse.json({ sucesso: true });
-    definirCookieAdmin(response);
+    definirCookieAdmin(
+      response,
+      criarSessaoDashboard({
+        identificador: email,
+        origem: "temporario",
+      })
+    );
     return response;
   }
 

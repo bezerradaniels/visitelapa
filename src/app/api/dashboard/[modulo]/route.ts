@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import { obterCookieDashboardAdmin } from "@/servicos/admin-auth";
+import {
+  cookieDashboardAutoriza,
+  obterCookieDashboardAdmin,
+} from "@/servicos/admin-auth";
 import { salvarRegistroDashboard } from "@/servicos/dashboard-persistencia";
 import { DashboardModuloId, FormValues } from "@/tipos/plataforma";
 
 function validarAcessoAdmin(request: NextRequest) {
   const cookieConfig = obterCookieDashboardAdmin();
-  return request.cookies.get(cookieConfig.nome)?.value === cookieConfig.valorAutorizado;
+  return cookieDashboardAutoriza(request.cookies.get(cookieConfig.nome)?.value);
 }
 
 export async function POST(

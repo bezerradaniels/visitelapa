@@ -411,6 +411,7 @@ export default function FormularioAdmin({
           if (submitPath) {
             const response = await fetch(submitPath, {
               method: "POST",
+              credentials: "include",
               headers: {
                 "Content-Type": "application/json",
               },
@@ -437,6 +438,7 @@ export default function FormularioAdmin({
           }
           const response = await fetch(`/api/dashboard/${modulo}`, {
             method: "POST",
+            credentials: "include",
             headers: {
               "Content-Type": "application/json",
             },
