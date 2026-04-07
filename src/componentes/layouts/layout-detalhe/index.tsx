@@ -9,9 +9,26 @@ type LayoutDetalheProps = {
   imagem: string;
   whatsapp?: string;
   instagram?: string;
+  avatarSrc?: string;
+  avatarAlt?: string;
+  avatarFallback?: string;
   children: ReactNode;
   aside: ReactNode;
 };
+
+function obterFallbackAvatar(valor?: string) {
+  const palavras = (valor ?? "")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2);
+
+  if (palavras.length === 0) {
+    return "VL";
+  }
+
+  return palavras.map((palavra) => palavra[0]?.toUpperCase() ?? "").join("");
+}
 
 export default function LayoutDetalhe({
   categoria,
@@ -20,9 +37,15 @@ export default function LayoutDetalhe({
   imagem,
   whatsapp,
   instagram,
+  avatarSrc,
+  avatarAlt,
+  avatarFallback,
   children,
   aside,
 }: LayoutDetalheProps) {
+  const fallback = obterFallbackAvatar(avatarFallback ?? titulo);
+  const temAvatar = Boolean(avatarSrc || fallback);
+
   return (
     <div className="bg-gray-50">
       <section className="relative overflow-hidden bg-main">
@@ -38,22 +61,42 @@ export default function LayoutDetalhe({
         <div className="relative z-20">
           <Container>
             <div className="flex min-h-90 flex-col justify-end py-16">
-              <span className="inline-flex w-fit rounded-full bg-white/90 px-3 py-1 text-xs font-medium text-main/90">
-                {categoria}
-              </span>
+              <div className={`max-w-5xl ${temAvatar ? "md:flex md:items-end md:gap-6" : ""}`}>
+                {temAvatar ? (
+                  <div className="mb-6 shrink-0 md:mb-0">
+                    <div className="flex h-28 w-28 items-center justify-center overflow-hidden rounded-full border-4 border-white/85 bg-gradient-to-br from-slate-100 to-white text-3xl font-semibold tracking-tight text-main shadow-[0_18px_45px_-18px_rgba(15,23,42,0.8)] md:h-36 md:w-36 md:text-4xl">
+                      {avatarSrc ? (
+                        <img
+                          src={avatarSrc}
+                          alt={avatarAlt ?? titulo}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <span>{fallback}</span>
+                      )}
+                    </div>
+                  </div>
+                ) : null}
 
-              <h1 className="mt-4 max-w-4xl text-4xl font-bold tracking-tight text-white md:text-5xl">
-                {titulo}
-              </h1>
+                <div>
+                  <span className="inline-flex w-fit rounded-full bg-white/90 px-3 py-1 text-xs font-medium text-main/90">
+                    {categoria}
+                  </span>
 
-              <p className="mt-4 max-w-2xl text-base leading-7 text-gray-100 md:text-lg">
-                {descricao}
-              </p>
+                  <h1 className="mt-4 max-w-4xl text-4xl font-bold tracking-tight text-white md:text-5xl">
+                    {titulo}
+                  </h1>
 
-              <SocialButtons
-                whatsapp={whatsapp}
-                instagram={instagram}
-              />
+                  <p className="mt-4 max-w-2xl text-base leading-7 text-gray-100 md:text-lg">
+                    {descricao}
+                  </p>
+
+                  <SocialButtons
+                    whatsapp={whatsapp}
+                    instagram={instagram}
+                  />
+                </div>
+              </div>
             </div>
           </Container>
         </div>

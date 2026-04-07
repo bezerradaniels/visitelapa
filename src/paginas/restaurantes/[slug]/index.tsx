@@ -5,6 +5,10 @@ import BlocoPeriodo from "@/componentes/dashboard/blocos-info/bloco-periodo";
 import BlocoResumo from "@/componentes/dashboard/blocos-info/bloco-resumo";
 import BlocoSolicitarAlteracao from "@/componentes/dashboard/blocos-info/bloco-solicitar-alteracao";
 import LayoutDetalhe from "@/componentes/layouts/layout-detalhe";
+import {
+  criarCapaFallbackRestaurante,
+  criarLogoFallbackRestaurante,
+} from "@/servicos/negocios-fallback";
 import { buscarRestaurantePorSlug } from "@/servicos/restaurantes";
 import { obterConfiguracaoPortal } from "@/servicos/portal";
 
@@ -37,13 +41,20 @@ export default async function RestauranteDetalhePagina({
 
   const portal = obterConfiguracaoPortal();
   const urlPublica = `${portal.siteUrl}/restaurantes/${restaurante.slug}`;
+  const capaRestaurante =
+    restaurante.imagem || criarCapaFallbackRestaurante(restaurante.titulo);
+  const avatarRestaurante =
+    restaurante.logo || criarLogoFallbackRestaurante(restaurante.titulo);
 
   return (
     <LayoutDetalhe
       categoria={restaurante.categoria}
       titulo={restaurante.titulo}
       descricao={restaurante.descricao}
-      imagem={restaurante.imagem}
+      imagem={capaRestaurante}
+      avatarSrc={avatarRestaurante}
+      avatarAlt={`Logo de ${restaurante.titulo}`}
+      avatarFallback={restaurante.titulo}
       whatsapp={restaurante.whatsapp}
       instagram={restaurante.instagram}
       aside={

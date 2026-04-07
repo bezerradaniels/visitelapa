@@ -96,7 +96,7 @@ export default function CardLogin() {
           <span className="text-sm font-semibold text-main">
             E-mail
           </span>
-          <div className="flex items-center gap-3 rounded-[32px] border border-slate-200 px-4 py-3">
+          <div className="flex items-center gap-3 rounded-4xl border border-slate-200 px-4 py-3">
             <Icone
               icon={Mail01Icon}
               size={18}
@@ -115,7 +115,7 @@ export default function CardLogin() {
 
         <label className="flex flex-col gap-3">
           <span className="text-sm font-semibold text-main">Senha</span>
-          <div className="flex items-center gap-3 rounded-[32px] border border-slate-200 px-4 py-3">
+          <div className="flex items-center gap-3 rounded-4xl border border-slate-200 px-4 py-3">
             <Icone
               icon={LockPasswordIcon}
               size={18}
@@ -135,7 +135,7 @@ export default function CardLogin() {
         <button
           type="submit"
           disabled={isPending || !email.trim() || !senha}
-          className="inline-flex w-full items-center justify-center gap-2 rounded-[32px] bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+          className="inline-flex w-full items-center justify-center gap-2 rounded-4xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {isPending ? "Entrando..." : "Entrar"}
         </button>

@@ -9,6 +9,7 @@ function mapRow(row: any): Restaurante {
     categoria: row.categoria,
     titulo: row.titulo,
     descricao: row.descricao,
+    logo: row.logo ?? row.imagem ?? "",
     imagem: row.imagem,
     whatsapp: row.whatsapp,
     instagram: row.instagram,

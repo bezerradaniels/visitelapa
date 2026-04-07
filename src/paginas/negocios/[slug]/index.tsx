@@ -4,6 +4,10 @@ import BlocoListaInformacoes from "@/componentes/dashboard/blocos-info/bloco-lis
 import BlocoResumo from "@/componentes/dashboard/blocos-info/bloco-resumo";
 import BlocoSolicitarAlteracao from "@/componentes/dashboard/blocos-info/bloco-solicitar-alteracao";
 import LayoutDetalhe from "@/componentes/layouts/layout-detalhe";
+import {
+  criarCapaFallbackNegocio,
+  criarLogoFallbackNegocio,
+} from "@/servicos/negocios-fallback";
 import { buscarNegocioPorSlug } from "@/servicos/negocios";
 import { obterConfiguracaoPortal } from "@/servicos/portal";
 
@@ -36,13 +40,18 @@ export default async function NegocioDetalhePagina({
 
   const portal = obterConfiguracaoPortal();
   const urlPublica = `${portal.siteUrl}/${negocio.username}`;
+  const capaNegocio = negocio.imagem || criarCapaFallbackNegocio(negocio.titulo);
+  const avatarNegocio = negocio.logo || criarLogoFallbackNegocio(negocio.titulo);
 
   return (
     <LayoutDetalhe
       categoria={negocio.categoria}
       titulo={negocio.titulo}
       descricao={negocio.descricao}
-      imagem={negocio.imagem}
+      imagem={capaNegocio}
+      avatarSrc={avatarNegocio}
+      avatarAlt={`Logo de ${negocio.titulo}`}
+      avatarFallback={negocio.titulo}
       whatsapp={negocio.whatsapp}
       instagram={negocio.instagram}
       aside={
