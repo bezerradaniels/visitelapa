@@ -24,9 +24,9 @@ export default function SolicitarAlteracao({
   });
 
   return (
-    <div className="rounded-[2rem] border border-amber-200 bg-amber-50 p-6">
+    <div className="rounded-4xl border border-amber-200 bg-amber-50 p-6">
       <div className="flex items-start gap-4">
-        <div className="rounded-[32px] bg-white p-3 text-amber-700">
+        <div className="rounded-4xl bg-white p-3 text-amber-700">
           <Icone
             icon={Message01Icon}
             size={20}
@@ -45,7 +45,7 @@ export default function SolicitarAlteracao({
           <Link
             href={criarLinkWhatsappPortal(mensagem)}
             target="_blank"
-            className="mt-5 inline-flex items-center gap-2 rounded-[32px] bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
+            className="mt-5 inline-flex items-center gap-2 rounded-4xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
           >
             <Icone
               icon={Message01Icon}

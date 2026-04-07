@@ -15,6 +15,11 @@ export default function CampoTexto({
   const isTelefone = /(whatsapp|telefone)/i.test(field.name);
   const isInstagram = /instagram/i.test(field.name);
 
+  function aplicarQuickAction(action: NonNullable<FieldComponentProps["field"]["quickActions"]>[number]) {
+    onChange(field.name, action.value);
+    action.updates?.forEach((update) => onChange(update.name, update.value));
+  }
+
   return (
     <FieldWrapper
       label={field.label}
@@ -45,6 +50,27 @@ export default function CampoTexto({
           field.readOnly ? "bg-slate-50 text-slate-500" : "bg-white"
         }`}
       />
+
+      {field.quickActions?.length ? (
+        <div className="flex flex-wrap items-center gap-2 text-sm text-slate-600">
+          <span className="font-medium text-slate-500">
+            {field.quickActions.length === 1 ? "Sugestão rápida:" : "Sugestões rápidas:"}
+          </span>
+          {field.quickActions.map((action) => (
+            <button
+              key={`${field.name}-${action.label}`}
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                aplicarQuickAction(action);
+              }}
+              className="cursor-pointer text-left font-semibold text-sky-700 underline underline-offset-4 transition hover:text-sky-900"
+            >
+              {action.label}
+            </button>
+          ))}
+        </div>
+      ) : null}
     </FieldWrapper>
   );
 }

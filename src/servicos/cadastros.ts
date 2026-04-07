@@ -174,6 +174,13 @@ const ACAO_RAPIDA_CIDADE_EVENTO = [
   },
 ];
 
+const ACAO_RAPIDA_CATEGORIA_NEGOCIOS = [
+  { label: "Academia", value: "Academia" },
+  { label: "Loja", value: "Loja" },
+  { label: "Clínica", value: "Clínica" },
+  { label: "Contabilidade", value: "Contabilidade" },
+];
+
 const CAMPOS_LOCALIZACAO: FormFieldDefinition[] = [
   {
     kind: "text",
@@ -551,14 +558,12 @@ const CAMPOS_EXCLUSIVOS: Record<CadastroTipoId, FormFieldDefinition[]> = {
   ],
   negocios: [
     {
-      kind: "select",
-      name: "tipoNegocio",
-      label: "Tipo de negócio",
+      kind: "text",
+      name: "subcategoria",
+      label: "Subcategoria",
       section: "Informações do negócio",
-      options: [
-        { label: "Empresa", value: "empresa" },
-        { label: "Prestador de serviço", value: "prestador" },
-      ],
+      placeholder: "Odonto, Estética, etc",
+      description: "A subcategoria ajuda a classificar melhor seu negócio.",
       required: true,
     },
     {
@@ -571,6 +576,24 @@ const CAMPOS_EXCLUSIVOS: Record<CadastroTipoId, FormFieldDefinition[]> = {
         "Até 20 caracteres com letras, números e underscore para a URL curta do portal.",
       required: true,
       maxLength: 20,
+    },
+    {
+      kind: "text-array",
+      name: "especialidades",
+      label: "Serviços",
+      section: "Informações do negócio",
+      placeholder: "Nome do serviço",
+      description: "Adicione os principais serviços oferecidos pelo seu negócio.",
+      required: true,
+    },
+    {
+      kind: "text-array",
+      name: "diferenciais",
+      label: "Diferenciais",
+      section: "Informações do negócio",
+      placeholder: "Diferencial do negócio",
+      description: "Adicione os diferenciais (ex: Estacionamento, Wi-fi, Atendimento 24h).",
+      required: true,
     },
   ],
   restaurantes: [
@@ -737,24 +760,51 @@ export function listarOpcoesCategoriaPadrao(tipo: CadastroTipoId) {
 }
 
 export function obterCamposCadastro(tipo: CadastroTipoId) {
-  return CAMPOS_COMUNS_CADASTRO.filter((campo) =>
-    tipo === "pacotes" ? !CAMPOS_LOCALIZACAO_IGNORADOS_PACOTES.has(campo.name) : true
-  )
-    .map((campo) => {
-      if (campo.name === "categoria") {
-        return { ...campo, options: OPCOES_CATEGORIAS[tipo] };
-      }
+  const exclusivos = [...(CAMPOS_EXCLUSIVOS[tipo] || [])];
 
-      if (tipo === "eventos" && campo.name === "cidade") {
+  const comuns = CAMPOS_COMUNS_CADASTRO.filter((campo) =>
+    tipo === "pacotes" ? !CAMPOS_LOCALIZACAO_IGNORADOS_PACOTES.has(campo.name) : true
+  ).map((campo) => {
+    if (campo.name === "categoria") {
+      if (tipo === "negocios") {
         return {
           ...campo,
-          quickActions: ACAO_RAPIDA_CIDADE_EVENTO,
+          kind: "text" as const,
+          options: undefined,
+          allowCustom: undefined,
+          quickActions: ACAO_RAPIDA_CATEGORIA_NEGOCIOS,
         };
       }
+      return {
+        ...campo,
+        options: OPCOES_CATEGORIAS[tipo],
+      };
+    }
 
-      return campo;
-    })
-    .concat(CAMPOS_EXCLUSIVOS[tipo]);
+    if (tipo === "eventos" && campo.name === "cidade") {
+      return {
+        ...campo,
+        quickActions: ACAO_RAPIDA_CIDADE_EVENTO,
+      };
+    }
+
+    return campo;
+  });
+
+  if (tipo === "negocios") {
+    const subIdx = exclusivos.findIndex((c) => c.name === "subcategoria");
+    if (subIdx !== -1) {
+      const [campoSub] = exclusivos.splice(subIdx, 1);
+      const catIdx = comuns.findIndex((c) => c.name === "categoria");
+      if (catIdx !== -1) {
+        comuns.splice(catIdx + 1, 0, campoSub);
+      } else {
+        comuns.push(campoSub);
+      }
+    }
+  }
+
+  return comuns.concat(exclusivos);
 }
 
 export function obterCamposCadastroPublico(tipo: CadastroTipoId) {

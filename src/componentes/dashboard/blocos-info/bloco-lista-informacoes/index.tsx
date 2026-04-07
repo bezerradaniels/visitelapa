@@ -17,7 +17,7 @@ export default function BlocoListaInformacoes({
   itens,
 }: BlocoListaInformacoesProps) {
   return (
-    <div className="rounded-[2rem] border border-slate-200 bg-white p-6">
+    <div className="rounded-4xl border border-slate-200 bg-white p-6">
       <h3 className="text-lg font-semibold text-slate-950">{titulo}</h3>
 
       <div className="mt-5 space-y-4">

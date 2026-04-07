@@ -1,5 +1,7 @@
 import FieldWrapper from "../field-wrapper";
 import { FieldComponentProps } from "../types";
+import { usePathname } from "next/navigation";
+import Link from "next/link";
 
 function extrairValoresSelecionados(value: FieldComponentProps["value"]) {
   if (typeof value !== "string") {
@@ -18,6 +20,8 @@ export default function CampoSelect({
   error,
   onChange,
 }: FieldComponentProps) {
+  const pathname = usePathname();
+
   function aplicarQuickAction(action: NonNullable<FieldComponentProps["field"]["quickActions"]>[number]) {
     onChange(field.name, action.value);
     action.updates?.forEach((update) => onChange(update.name, update.value));
@@ -61,6 +65,12 @@ export default function CampoSelect({
             />
           ))}
         </datalist>
+
+        {field.name === "categoria" && value && !field.options?.some((o) => String(o.value).toLowerCase() === String(value).toLowerCase()) && pathname?.includes("/dashboard") && (
+          <p className="mt-1 text-sm text-slate-500">
+            Categoria não encontrada. <Link href="/dashboard/categorias" target="_blank" className="font-semibold text-main hover:underline">Cadastrar categoria</Link>
+          </p>
+        )}
 
         {field.quickActions?.length ? (
           <div className="flex flex-wrap items-center gap-2 text-sm text-slate-600">

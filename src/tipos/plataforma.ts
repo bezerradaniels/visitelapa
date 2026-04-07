@@ -32,6 +32,7 @@ export type FieldKind =
   | "text"
   | "textarea"
   | "rich-text"
+  | "text-array"
   | "select"
   | "checkbox-group"
   | "checkbox"

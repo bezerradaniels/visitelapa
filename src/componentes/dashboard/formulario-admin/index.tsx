@@ -14,6 +14,7 @@ import CampoRichText from "@/componentes/dashboard/fields/campo-rich-text";
 import CampoSelect from "@/componentes/dashboard/fields/campo-select";
 import CampoSwitch from "@/componentes/dashboard/fields/campo-switch";
 import CampoTags from "@/componentes/dashboard/fields/campo-tags";
+import CampoTextoArray from "@/componentes/dashboard/fields/campo-texto-array";
 import CampoTextarea from "@/componentes/dashboard/fields/campo-textarea";
 import CampoTexto from "@/componentes/dashboard/fields/campo-texto";
 import FormGrupo from "@/componentes/dashboard/form-grupo";
@@ -353,6 +354,8 @@ export default function FormularioAdmin({
         return <CampoNumero {...props} />;
       case "tags":
         return <CampoTags {...props} />;
+      case "text-array":
+        return <CampoTextoArray {...props} />;
       case "image-single":
       case "image-gallery":
         return <CampoImagem {...props} />;
@@ -488,7 +491,7 @@ export default function FormularioAdmin({
           </div>
           <div className="mt-4 h-3 overflow-hidden rounded-md bg-slate-100">
             <div
-              className="h-full rounded-md bg-gradient-to-r from-sky-500 via-violet-500 to-pink-500 transition-all duration-500 ease-out animate-pulse"
+              className="h-full rounded-md bg-linear-to-r from-sky-500 via-violet-500 to-pink-500 transition-all duration-500 ease-out animate-pulse"
               style={{ width: `${progresso}%` }}
             />
           </div>

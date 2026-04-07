@@ -359,9 +359,9 @@ export async function salvarRegistroDashboard(
             endereco: montarEndereco(values),
             atendimento: "",
             contato: asString(values.whatsappResponsavel),
-            especialidades: splitLines(values.descricao),
-            diferenciais: [],
-            destaque_listagem: "",
+            especialidades: Array.isArray(values.especialidades) ? values.especialidades.filter(Boolean) : [],
+            diferenciais: Array.isArray(values.diferenciais) ? values.diferenciais.filter(Boolean) : [],
+            destaque_listagem: asString(values.subcategoria),
             status: obterStatusPublicacao(values),
           },
           slugAtual
