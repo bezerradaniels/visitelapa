@@ -4,6 +4,7 @@ import Icone from "@/componentes/ui/icone";
 type InformacaoItem = {
   label: string;
   value: string;
+  multiline?: boolean;
   icon?: IconSvgElement;
 };
 
@@ -35,7 +36,7 @@ export default function BlocoListaInformacoes({
                 {item.label}
               </p>
             </div>
-            <p className="mt-2 text-sm leading-6 text-slate-700">{item.value}</p>
+            <p className="mt-2 whitespace-pre-line text-sm leading-6 text-slate-700">{item.value}</p>
           </div>
         ))}
       </div>

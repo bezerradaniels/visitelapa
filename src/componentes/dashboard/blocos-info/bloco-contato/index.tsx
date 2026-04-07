@@ -15,8 +15,27 @@ export default function BlocoContato({
   instagram,
   ctaLabel,
 }: BlocoContatoProps) {
+  // Monta link real do WhatsApp com mensagem personalizada
+  let whatsappHref: string | undefined = undefined;
+  if (whatsapp) {
+    // Remove tudo que não for número
+    const numeroLimpo = whatsapp.replace(/\D/g, "");
+    if (numeroLimpo.length >= 10) {
+      whatsappHref = `https://wa.me/${numeroLimpo}?text=${encodeURIComponent(
+        "Olá! Encontrei seu contato pelo portal Visite Lapa."
+      )}`;
+    }
+  }
+
+  // Monta link real do Instagram
+  const instagramHref = instagram
+    ? instagram.startsWith("http")
+      ? instagram
+      : `https://instagram.com/${instagram.replace(/^@/, "")}`
+    : undefined;
+
   return (
-    <div className="rounded-[2rem] border border-slate-200 bg-white p-6">
+    <div className="rounded-4xl border border-slate-200 bg-white p-6">
       <h3 className="text-lg font-semibold text-slate-950">Contato</h3>
 
       <div className="mt-5 space-y-4 text-sm text-slate-700">
@@ -34,7 +53,7 @@ export default function BlocoContato({
           </div>
         </div>
 
-        {instagram ? (
+        {instagramHref ? (
           <div className="flex items-start gap-3">
             <Icone
               icon={InstagramIcon}
@@ -46,8 +65,9 @@ export default function BlocoContato({
                 Instagram
               </p>
               <Link
-                href={instagram}
+                href={instagramHref}
                 target="_blank"
+                rel="noopener noreferrer"
                 className="mt-2 block text-slate-700 transition hover:text-slate-950"
               >
                 Abrir perfil
@@ -57,11 +77,12 @@ export default function BlocoContato({
         ) : null}
       </div>
 
-      {whatsapp ? (
+      {whatsappHref ? (
         <Link
-          href={whatsapp}
+          href={whatsappHref}
           target="_blank"
-          className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-[32px] bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
+          rel="noopener noreferrer"
+          className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-4xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
         >
           <Icone
             icon={Message01Icon}

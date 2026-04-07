@@ -26,7 +26,7 @@ export default function BuscaIAForm({ sugestoes }: BuscaIAFormProps) {
 
   return (
     <>
-      <div className="mt-8 w-full max-w-2xl rounded-[32px] border border-gray-200 bg-white p-2 transition focus-within:border-blue">
+      <div className="mt-8 w-full max-w-2xl rounded-4xl border border-gray-200 bg-white p-2 transition focus-within:border-blue">
         <div className="flex items-center gap-2">
           <input
             type="text"
@@ -69,12 +69,12 @@ export default function BuscaIAForm({ sugestoes }: BuscaIAFormProps) {
       {carregando ? (
         <div
           aria-live="polite"
-          className="mt-6 w-full max-w-3xl rounded-[32px] border border-white/25 bg-white/12 p-6 text-left text-white backdrop-blur"
+          className="mt-6 w-full max-w-3xl rounded-4xl border border-slate-200 bg-white p-6 text-left shadow-sm backdrop-blur"
         >
-          <p className="text-sm font-semibold uppercase tracking-[0.24em] text-sky-100">
+          <p className="text-sm font-semibold uppercase tracking-[0.24em] text-sky-600">
             Agente Visite Lapa
           </p>
-          <p className="mt-3 text-base leading-7 text-white/90">
+          <p className="mt-3 text-base leading-7 text-slate-700">
             Estou separando algumas publicações que combinam com o seu pedido.
           </p>
         </div>
@@ -83,13 +83,13 @@ export default function BuscaIAForm({ sugestoes }: BuscaIAFormProps) {
       {resultado ? (
         <div
           aria-live="polite"
-          className="mt-6 w-full max-w-3xl rounded-[32px] border border-white/25 bg-white/12 p-6 text-left text-white backdrop-blur"
+          className="mt-6 w-full max-w-3xl rounded-4xl border border-slate-200 bg-white p-6 text-left shadow-sm backdrop-blur"
         >
-          <p className="text-sm font-semibold uppercase tracking-[0.24em] text-sky-100">
+          <p className="text-sm font-semibold uppercase tracking-[0.24em] text-sky-600">
             Agente Visite Lapa
           </p>
 
-          <p className="mt-3 text-base leading-7 text-white/90">
+          <p className="mt-3 text-base leading-7 text-slate-700">
             {resultado.mensagem}
           </p>
 
@@ -99,17 +99,17 @@ export default function BuscaIAForm({ sugestoes }: BuscaIAFormProps) {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className="rounded-[24px] border border-white/15 bg-white/10 px-4 py-4 transition hover:border-sky-200/60 hover:bg-white/16"
+                  className="rounded-3xl border border-slate-100 bg-slate-50 px-4 py-4 transition hover:border-sky-300 hover:bg-white hover:shadow-sm"
                 >
-                  <span className="inline-flex rounded-full bg-white/14 px-3 py-1 text-xs font-medium text-sky-100">
+                  <span className="inline-flex rounded-full bg-sky-100 px-3 py-1 text-xs font-medium text-sky-700">
                     {item.categoria}
                   </span>
 
-                  <p className="mt-3 text-base font-semibold text-white">
+                  <p className="mt-3 text-base font-semibold text-slate-900">
                     {item.titulo}
                   </p>
 
-                  <p className="mt-2 text-sm leading-6 text-white/75">
+                  <p className="mt-2 text-sm leading-6 text-slate-600">
                     {item.descricao}
                   </p>
                 </Link>
@@ -120,7 +120,7 @@ export default function BuscaIAForm({ sugestoes }: BuscaIAFormProps) {
           <div className="mt-5">
             <Link
               href={resultado.linkExplorar}
-              className="inline-flex items-center rounded-full bg-white px-5 py-3 text-sm font-semibold text-main transition hover:opacity-90"
+              className="inline-flex items-center rounded-full bg-main px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90"
             >
               {resultado.labelExplorar}
             </Link>

@@ -3,12 +3,13 @@ import BlocoDestaques from "@/componentes/dashboard/blocos-info/bloco-destaques"
 import BlocoListaInformacoes from "@/componentes/dashboard/blocos-info/bloco-lista-informacoes";
 import BlocoResumo from "@/componentes/dashboard/blocos-info/bloco-resumo";
 import BlocoSolicitarAlteracao from "@/componentes/dashboard/blocos-info/bloco-solicitar-alteracao";
+import CardNegocioPlay from "@/componentes/cards/card-negocio-play";
 import LayoutDetalhe from "@/componentes/layouts/layout-detalhe";
 import {
   criarCapaFallbackNegocio,
   criarLogoFallbackNegocio,
 } from "@/servicos/negocios-fallback";
-import { buscarNegocioPorSlug } from "@/servicos/negocios";
+import { buscarNegocioPorSlug, buscarNegociosRelacionados } from "@/servicos/negocios";
 import { obterConfiguracaoPortal } from "@/servicos/portal";
 
 type NegocioDetalhePaginaProps = {
@@ -38,10 +39,20 @@ export default async function NegocioDetalhePagina({
     );
   }
 
+  const [relacionados] = await Promise.all([
+    buscarNegociosRelacionados(negocio.categoria, negocio.slug),
+  ]);
+
   const portal = obterConfiguracaoPortal();
   const urlPublica = `${portal.siteUrl}/${negocio.username}`;
   const capaNegocio = negocio.imagem || criarCapaFallbackNegocio(negocio.titulo);
   const avatarNegocio = negocio.logo || criarLogoFallbackNegocio(negocio.titulo);
+
+  // Separa endereço: rua, bairro (sem cidade - último segmento)
+  const partesEndereco = (negocio.endereco ?? "").split(",").map((p) => p.trim()).filter(Boolean);
+  const ruaNumero = partesEndereco.slice(0, partesEndereco.length > 2 ? partesEndereco.length - 2 : partesEndereco.length - 1).join(", ");
+  const bairro = partesEndereco.length >= 2 ? partesEndereco[partesEndereco.length - 2] : "";
+  const enderecoFormatado = [ruaNumero, bairro].filter(Boolean).join("\n");
 
   return (
     <LayoutDetalhe
@@ -60,12 +71,7 @@ export default async function NegocioDetalhePagina({
             titulo="Informações"
             itens={[
               { label: "Categoria", value: negocio.categoria },
-              { label: "Endereço", value: negocio.endereco },
-              { label: "Atendimento", value: negocio.atendimento },
-              {
-                label: "URL curta",
-                value: urlPublica.replace("https://", ""),
-              },
+              { label: "Endereço", value: enderecoFormatado },
             ]}
           />
 
@@ -73,7 +79,7 @@ export default async function NegocioDetalhePagina({
             telefone={negocio.contato}
             whatsapp={negocio.whatsapp}
             instagram={negocio.instagram}
-            ctaLabel="Entrar em contato"
+            ctaLabel="Visitar perfil"
           />
 
           <BlocoSolicitarAlteracao
@@ -99,6 +105,26 @@ export default async function NegocioDetalhePagina({
           itens={negocio.diferenciais}
         />
       </div>
+
+      {relacionados.length > 0 ? (
+        <div>
+          <h2 className="text-xl font-semibold text-slate-900">
+            Outras empresas em {negocio.categoria}
+          </h2>
+          <div className="mt-4 grid gap-4">
+            {relacionados.map((r) => (
+              <CardNegocioPlay
+                key={r.slug}
+                href={`/negocios/${r.slug}`}
+                label={r.categoria}
+                titulo={r.titulo}
+                descricao={r.descricao}
+                logo={r.logo}
+              />
+            ))}
+          </div>
+        </div>
+      ) : null}
     </LayoutDetalhe>
   );
 }

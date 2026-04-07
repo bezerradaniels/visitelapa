@@ -45,6 +45,18 @@ export async function buscarNegocioPorUsername(username: string): Promise<Negoci
   return data ? mapRow(data) : undefined;
 }
 
+export async function buscarNegociosRelacionados(categoria: string, slugAtual: string, limite = 4): Promise<Negocio[]> {
+  const { data, error } = await supabase
+    .from("negocios")
+    .select("*")
+    .eq("categoria", categoria)
+    .eq("status", "publicado")
+    .neq("slug", slugAtual)
+    .limit(limite);
+  if (error) throw error;
+  return (data ?? []).map(mapRow);
+}
+
 export async function buscarNegocioPorSlugOuUsername(identifier: string): Promise<Negocio | undefined> {
   const { data, error } = await supabase
     .from("negocios")

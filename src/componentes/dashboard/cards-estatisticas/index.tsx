@@ -29,10 +29,10 @@ export default function CardsEstatisticas({
         return (
           <article
             key={stat.id}
-            className="rounded-[2rem] border border-slate-200 bg-white p-6"
+            className="rounded-4xl border border-slate-200 bg-white p-6"
           >
             <div className="flex items-start justify-between gap-4">
-              <div className="rounded-[32px] bg-slate-100 p-3 text-slate-700">
+              <div className="rounded-4xl bg-slate-100 p-3 text-slate-700">
                 <Icone
                   icon={icon}
                   size={22}

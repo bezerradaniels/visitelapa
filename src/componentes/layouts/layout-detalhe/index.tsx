@@ -59,12 +59,12 @@ export default function LayoutDetalhe({
 
         <div className="relative z-20">
           <Container>
-            <div className="flex min-h-[18rem] flex-col justify-center py-10 md:min-h-[20rem] md:py-12">
+            <div className="flex min-h-72 flex-col justify-center py-10 md:min-h-80 md:py-12">
               <div className="max-w-5xl">
                 {temAvatar ? (
                   <div className="flex items-center gap-4 md:gap-5">
                     <div className="shrink-0">
-                      <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border-4 border-white/85 bg-gradient-to-br from-slate-100 to-white text-2xl font-semibold tracking-tight text-main shadow-[0_18px_45px_-18px_rgba(15,23,42,0.8)] md:h-24 md:w-24 md:text-3xl">
+                      <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border-4 border-white/85 bg-linear-to-br from-slate-100 to-white text-2xl font-semibold tracking-tight text-main shadow-[0_18px_45px_-18px_rgba(15,23,42,0.8)] md:h-24 md:w-24 md:text-3xl">
                         {avatarSrc ? (
                           <img
                             src={avatarSrc}

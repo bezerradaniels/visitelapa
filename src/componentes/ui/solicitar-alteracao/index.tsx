@@ -51,7 +51,7 @@ export default function SolicitarAlteracao({
               icon={Message01Icon}
               size={18}
             />
-            Solicitar via WhatsApp
+            Solicitar
           </Link>
         </div>
       </div>
