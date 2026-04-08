@@ -858,7 +858,11 @@ export function criarValoresIniciais(campos: FormFieldDefinition[], seed?: FormV
   }, {});
 }
 
-export async function validarUsernameNegocio(username: string, currentUsername?: string) {
+export async function validarUsernameNegocio(
+  username: string,
+  currentUsername?: string,
+  slugAtual?: string
+) {
   const valor = username.trim().toLowerCase();
   const currentNormalizado = currentUsername?.trim().toLowerCase();
 
@@ -881,7 +885,9 @@ export async function validarUsernameNegocio(username: string, currentUsername?:
 
   const { supabase } = await import("@/lib/supabase");
   let query = supabase.from("negocios").select("username").eq("username", valor);
-  if (currentNormalizado) {
+  if (slugAtual) {
+    query = query.neq("slug", slugAtual);
+  } else if (currentNormalizado) {
     query = query.neq("username", currentNormalizado);
   }
   const { data } = await query.maybeSingle();

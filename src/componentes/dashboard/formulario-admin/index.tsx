@@ -375,7 +375,8 @@ export default function FormularioAdmin({
     if (typeof valoresNormalizados.username === "string") {
       const usernameError = await validarUsernameNegocio(
         valoresNormalizados.username,
-        currentUsername
+        currentUsername,
+        registroId
       );
       if (usernameError) {
         nextErrors.username = usernameError;

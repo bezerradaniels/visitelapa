@@ -129,7 +129,7 @@ export default function AcoesEditoriais({
   }
 
   return (
-    <div className="rounded-[2rem] border border-slate-200 bg-white p-6">
+    <div className="rounded-4xl border border-slate-200 bg-white p-6">
       <h3 className="text-lg font-semibold text-slate-950">
         Aprovação administrativa
       </h3>
@@ -150,13 +150,13 @@ export default function AcoesEditoriais({
       ) : null}
 
       {statusAcao ? (
-        <div className="mt-4 rounded-[32px] border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-900">
+        <div className="mt-4 rounded-4xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-900">
           {statusAcao}
         </div>
       ) : null}
 
       {erroAcao ? (
-        <div className="mt-4 rounded-[32px] border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-900">
+        <div className="mt-4 rounded-4xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-900">
           {erroAcao}
         </div>
       ) : null}
@@ -168,7 +168,7 @@ export default function AcoesEditoriais({
             type="button"
             onClick={() => executarAcao(acao)}
             disabled={isPending}
-            className={`w-full rounded-[32px] px-4 py-3 text-sm font-semibold transition cursor-pointer disabled:cursor-not-allowed disabled:opacity-60 ${acao.className}`}
+            className={`w-full rounded-4xl px-4 py-3 text-sm font-semibold transition cursor-pointer disabled:cursor-not-allowed disabled:opacity-60 ${acao.className}`}
           >
             {isPending ? "Processando..." : acao.label}
           </button>

@@ -171,6 +171,11 @@ export default function AprovacaoDetalhePagina({
             successDescription="As alterações ficaram registradas apenas nesta solicitação pendente. O site público só muda depois da ação de aprovar."
             submitPath={`/api/dashboard/aprovacoes/${solicitacao.id}`}
             submitBody={{ action: "salvar" }}
+            currentUsername={
+              typeof solicitacao.payload.username === "string"
+                ? solicitacao.payload.username
+                : undefined
+            }
           />
         </div>
       </LayoutEdicao>
