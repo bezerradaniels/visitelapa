@@ -167,8 +167,8 @@ export default function AprovacaoDetalhePagina({
             fields={campos}
             initialValues={solicitacao.payload}
             submitLabel="Salvar ajustes"
-            successTitle="Ajustes salvos"
-            successDescription="As alterações foram registradas nesta solicitação e já podem ser usadas na etapa de aprovação."
+            successTitle="Ajustes salvos na solicitação"
+            successDescription="As alterações ficaram registradas apenas nesta solicitação pendente. O site público só muda depois da ação de aprovar."
             submitPath={`/api/dashboard/aprovacoes/${solicitacao.id}`}
             submitBody={{ action: "salvar" }}
           />

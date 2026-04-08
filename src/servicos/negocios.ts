@@ -1,6 +1,28 @@
 import { Negocio } from "@/dados/negocios";
 import { supabase } from "@/lib/supabase";
-import { criarServico } from "./utils";
+import { buscarRegistroAdminPorSlug, criarServico, listarRegistrosAdmin } from "./utils";
+
+export type NegocioAdminRow = {
+  slug: string;
+  username: string | null;
+  categoria: string | null;
+  titulo: string | null;
+  descricao: string | null;
+  logo: string | null;
+  imagem: string | null;
+  whatsapp: string | null;
+  instagram: string | null;
+  endereco: string | null;
+  atendimento: string | null;
+  contato: string | null;
+  sobre: string[] | null;
+  especialidades: string[] | null;
+  diferenciais: string[] | null;
+  destaque_listagem: string | null;
+  status: string | null;
+  updated_at?: string | null;
+  atualizado_em?: string | null;
+};
 
 function sanitizarArrayStrings(valor: unknown): string[] {
   if (!Array.isArray(valor)) return [];
@@ -38,14 +60,15 @@ const servico = criarServico<Negocio>({
 export const listarNegocios = servico.listar;
 export const buscarNegocioPorSlug = servico.buscarPorSlug;
 export const listarFiltrosNegocios = servico.listarFiltros;
+export const listarNegociosAdmin = () =>
+  listarRegistrosAdmin<NegocioAdminRow>("negocios", {
+    coluna: "atualizado_em",
+  });
+export const buscarNegocioPorSlugAdminRaw = (slug: string) =>
+  buscarRegistroAdminPorSlug<NegocioAdminRow>("negocios", slug);
 
 export async function buscarNegocioPorSlugAdmin(slug: string): Promise<Negocio | undefined> {
-  const { data, error } = await supabase
-    .from("negocios")
-    .select("*")
-    .eq("slug", slug)
-    .maybeSingle();
-  if (error) throw error;
+  const data = await buscarNegocioPorSlugAdminRaw(slug);
   return data ? mapRow(data) : undefined;
 }
 

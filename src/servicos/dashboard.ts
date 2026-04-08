@@ -16,10 +16,23 @@ import {
   montarHtmlLegadoBlog,
   normalizarGaleriaBlog,
 } from "@/servicos/blog-conteudo";
-import { buscarEventoPorSlug, listarEventos } from "@/servicos/eventos";
-import { buscarHotelPorSlug, listarHoteis } from "@/servicos/hoteis";
-import { buscarNegocioPorSlug, listarNegocios } from "@/servicos/negocios";
-import { buscarRestaurantePorSlug, listarRestaurantes } from "@/servicos/restaurantes";
+import { formatarMoedaBrlPorNumero } from "@/servicos/formulario-formatacao";
+import {
+  buscarEventoPorSlugAdmin,
+  listarEventosAdmin,
+} from "@/servicos/eventos";
+import {
+  buscarHotelPorSlugAdmin,
+  listarHoteisAdmin,
+} from "@/servicos/hoteis";
+import {
+  buscarNegocioPorSlugAdminRaw,
+  listarNegociosAdmin,
+} from "@/servicos/negocios";
+import {
+  buscarRestaurantePorSlugAdmin,
+  listarRestaurantesAdmin,
+} from "@/servicos/restaurantes";
 import {
   CadastroTipoId,
   DashboardModuleConfig,
@@ -27,6 +40,7 @@ import {
   DashboardStat,
   FormFieldDefinition,
   FormValues,
+  ImageFieldValue,
 } from "@/tipos/plataforma";
 import {
   criarValoresIniciais,
@@ -40,6 +54,208 @@ import {
   contarSolicitacoesPendentes,
   listarSolicitacoesPendentes as listarSolicitacoesPendentesPublicas,
 } from "./solicitacoes-publicas";
+
+type PacoteAdminRow = {
+  slug: string;
+  categoria: string | null;
+  titulo: string | null;
+  descricao: string | null;
+  imagem: string | null;
+  logo?: string | null;
+  whatsapp: string | null;
+  instagram: string | null;
+  origem_cidade: string | null;
+  origem_estado: string | null;
+  destino_cidade: string | null;
+  destino_estado: string | null;
+  data_ida: string | null;
+  data_retorno: string | null;
+  valor_vista: number | null;
+  valor_parcelado: number | null;
+  parcelas: number | null;
+  comodidades: string[] | null;
+  valor_final_parcelado: number | null;
+  status: string | null;
+  updated_at?: string | null;
+  atualizado_em?: string | null;
+};
+
+function criarValorInicialImagem(
+  src?: string | null,
+  nome = "Imagem atual"
+): ImageFieldValue {
+  if (!src?.trim()) {
+    return [];
+  }
+
+  return [
+    {
+      id: `${nome.toLowerCase().replace(/\s+/g, "-")}-existente`,
+      name: nome,
+      src: src.trim(),
+      cropFocus: "center",
+      zoom: 1,
+    },
+  ];
+}
+
+function normalizarListaStrings(valor: unknown): string[] {
+  if (!Array.isArray(valor)) {
+    return [];
+  }
+
+  return valor.filter(
+    (item): item is string => typeof item === "string" && item.trim().length > 0
+  );
+}
+
+function formatarListaStrings(valor: unknown) {
+  return normalizarListaStrings(valor).join(", ");
+}
+
+function formatarMoedaInicial(valor: unknown) {
+  return typeof valor === "number" && Number.isFinite(valor)
+    ? formatarMoedaBrlPorNumero(valor)
+    : "";
+}
+
+function obterAtualizacaoRegistro(
+  row: { updated_at?: string | null; atualizado_em?: string | null },
+  fallback = ""
+) {
+  return row.updated_at ?? row.atualizado_em ?? fallback;
+}
+
+function decomporEndereco(enderecoCompleto: unknown) {
+  const texto = typeof enderecoCompleto === "string" ? enderecoCompleto.trim() : "";
+
+  if (!texto) {
+    return {
+      endereco: "",
+      numero: "",
+      bairro: "",
+      cidade: "",
+      estado: "",
+    };
+  }
+
+  const partes = texto
+    .split(",")
+    .map((parte) => parte.trim())
+    .filter(Boolean);
+
+  if (partes.length >= 5) {
+    const estado = partes.pop() ?? "";
+    const cidade = partes.pop() ?? "";
+    const bairro = partes.pop() ?? "";
+    const numero = partes.pop() ?? "";
+
+    return {
+      endereco: partes.join(", "),
+      numero,
+      bairro,
+      cidade,
+      estado,
+    };
+  }
+
+  if (partes.length === 4) {
+    return {
+      endereco: partes[0] ?? "",
+      numero: "",
+      bairro: partes[1] ?? "",
+      cidade: partes[2] ?? "",
+      estado: partes[3] ?? "",
+    };
+  }
+
+  if (partes.length === 3) {
+    return {
+      endereco: partes[0] ?? "",
+      numero: "",
+      bairro: "",
+      cidade: partes[1] ?? "",
+      estado: partes[2] ?? "",
+    };
+  }
+
+  if (partes.length === 2) {
+    return {
+      endereco: partes[0] ?? "",
+      numero: "",
+      bairro: "",
+      cidade: partes[1] ?? "",
+      estado: "",
+    };
+  }
+
+  return {
+    endereco: texto,
+    numero: "",
+    bairro: "",
+    cidade: "",
+    estado: "",
+  };
+}
+
+function decomporLocalEvento(localCompleto: unknown) {
+  const texto = typeof localCompleto === "string" ? localCompleto.trim() : "";
+
+  if (!texto) {
+    return {
+      localEvento: "",
+      ...decomporEndereco(""),
+    };
+  }
+
+  const separador = " - ";
+  const indiceSeparador = texto.lastIndexOf(separador);
+
+  if (indiceSeparador === -1) {
+    return {
+      localEvento: texto,
+      ...decomporEndereco(""),
+    };
+  }
+
+  const localEvento = texto.slice(0, indiceSeparador).trim();
+  const endereco = texto.slice(indiceSeparador + separador.length).trim();
+
+  return {
+    localEvento,
+    ...decomporEndereco(endereco),
+  };
+}
+
+async function listarPacotesAdmin() {
+  const { supabase } = await import("@/lib/supabase");
+  const { data, error } = await supabase
+    .from("pacotes")
+    .select("*")
+    .order("data_ida", { ascending: true })
+    .order("updated_at", { ascending: false });
+
+  if (error) {
+    throw error;
+  }
+
+  return (data ?? []) as PacoteAdminRow[];
+}
+
+async function buscarPacotePorSlugAdmin(slug: string) {
+  const { supabase } = await import("@/lib/supabase");
+  const { data, error } = await supabase
+    .from("pacotes")
+    .select("*")
+    .eq("slug", slug)
+    .maybeSingle();
+
+  if (error) {
+    throw error;
+  }
+
+  return (data as PacoteAdminRow | null) ?? undefined;
+}
 
 const MODULOS_DASHBOARD: DashboardModuleConfig[] = [
   {
@@ -245,19 +461,13 @@ export async function listarLinhasModulo(modulo: DashboardModuloId) {
       }));
     case "pacotes":
       try {
-        const { supabase } = await import("@/lib/supabase");
-        const { data, error } = await supabase
-          .from("pacotes")
-          .select("slug, titulo, categoria, status, updated_at, data_ida")
-          .order("data_ida", { ascending: true })
-          .order("updated_at", { ascending: false });
-        if (error) throw error;
-        return (data ?? []).map((row) => ({
+        const itens = await listarPacotesAdmin();
+        return itens.map((row) => ({
           id: row.slug,
           titulo: row.titulo ?? "",
           categoria: row.categoria ?? "Pacote",
-          status: row.status ?? "publicado",
-          atualizado: row.updated_at ?? row.data_ida ?? "",
+          status: row.status ?? "rascunho",
+          atualizado: obterAtualizacaoRegistro(row, row.data_ida ?? ""),
           href: `/dashboard/pacotes/${row.slug}`,
         }));
       } catch {
@@ -271,46 +481,46 @@ export async function listarLinhasModulo(modulo: DashboardModuloId) {
         }));
       }
     case "eventos": {
-      const itens = await listarEventos();
+      const itens = await listarEventosAdmin();
       return itens.map((item) => ({
         id: item.slug,
-        titulo: item.titulo,
-        categoria: item.categoria,
-        status: "publicado" as const,
-        atualizado: item.data,
+        titulo: item.titulo ?? "",
+        categoria: item.categoria ?? "Evento",
+        status: item.status ?? "rascunho",
+        atualizado: obterAtualizacaoRegistro(item, item.data_inicio ?? ""),
         href: `/dashboard/eventos/${item.slug}`,
       }));
     }
     case "hoteis": {
-      const itens = await listarHoteis();
+      const itens = await listarHoteisAdmin();
       return itens.map((item) => ({
         id: item.slug,
-        titulo: item.titulo,
-        categoria: item.categoria,
-        status: "publicado" as const,
-        atualizado: item.checkIn,
+        titulo: item.titulo ?? "",
+        categoria: item.categoria ?? "Hotel",
+        status: item.status ?? "rascunho",
+        atualizado: obterAtualizacaoRegistro(item, item.check_in ?? ""),
         href: `/dashboard/hoteis/${item.slug}`,
       }));
     }
     case "negocios": {
-      const itens = await listarNegocios();
+      const itens = await listarNegociosAdmin();
       return itens.map((item) => ({
         id: item.slug,
-        titulo: item.titulo,
-        categoria: item.categoria,
-        status: "publicado" as const,
-        atualizado: item.atendimento,
+        titulo: item.titulo ?? "",
+        categoria: item.categoria ?? "Negócio",
+        status: item.status ?? "rascunho",
+        atualizado: obterAtualizacaoRegistro(item, item.atendimento ?? ""),
         href: `/dashboard/negocios/${item.slug}`,
       }));
     }
     case "restaurantes": {
-      const itens = await listarRestaurantes();
+      const itens = await listarRestaurantesAdmin();
       return itens.map((item) => ({
         id: item.slug,
-        titulo: item.titulo,
-        categoria: item.categoria,
-        status: "publicado" as const,
-        atualizado: item.funcionamento,
+        titulo: item.titulo ?? "",
+        categoria: item.categoria ?? "Restaurante",
+        status: item.status ?? "rascunho",
+        atualizado: obterAtualizacaoRegistro(item, item.funcionamento ?? ""),
         href: `/dashboard/restaurantes/${item.slug}`,
       }));
     }
@@ -744,12 +954,7 @@ export async function obterValoresModulo(
     }
     case "pacotes": {
       try {
-        const { supabase } = await import("@/lib/supabase");
-        const { data: item } = await supabase
-          .from("pacotes")
-          .select("*")
-          .eq("slug", slug)
-          .maybeSingle();
+        const item = await buscarPacotePorSlugAdmin(slug);
 
         return criarValoresIniciais(campos, {
           ...seedBase,
@@ -757,27 +962,19 @@ export async function obterValoresModulo(
           slug: item?.slug ?? registro.id,
           categoria: item?.categoria ?? registro.categoria,
           descricao: item?.descricao ?? "",
-          imagem: item?.imagem ?? "",
+          logo: criarValorInicialImagem(item?.logo ?? "", "Logo atual"),
+          capa: criarValorInicialImagem(item?.imagem ?? item?.logo ?? "", "Capa atual"),
           dataIda: item?.data_ida ?? "",
           dataRetorno: item?.data_retorno ?? "",
           origemCidade: item?.origem_cidade ?? "",
           origemEstado: item?.origem_estado ?? "",
           destinoCidade: item?.destino_cidade ?? "",
           destinoEstado: item?.destino_estado ?? "",
-          valorVista:
-            typeof item?.valor_vista === "number" ? String(item.valor_vista) : "",
-          valorParcelado:
-            typeof item?.valor_parcelado === "number"
-              ? String(item.valor_parcelado)
-              : "",
+          valorVista: formatarMoedaInicial(item?.valor_vista),
+          valorParcelado: formatarMoedaInicial(item?.valor_parcelado),
           parcelas: item?.parcelas ? String(item.parcelas) : "",
-          comodidades: Array.isArray(item?.comodidades)
-            ? item.comodidades.join(", ")
-            : "",
-          valorFinalParcelado:
-            typeof item?.valor_final_parcelado === "number"
-              ? String(item.valor_final_parcelado)
-              : "",
+          comodidades: formatarListaStrings(item?.comodidades),
+          valorFinalParcelado: formatarMoedaInicial(item?.valor_final_parcelado),
           publicado: item?.status === "publicado",
           seoTitulo: item?.titulo ?? registro.titulo,
           whatsapp: item?.whatsapp ?? seedBase.whatsapp,
@@ -808,7 +1005,8 @@ export async function obterValoresModulo(
       }
     }
     case "eventos": {
-      const item = await buscarEventoPorSlug(slug);
+      const item = await buscarEventoPorSlugAdmin(slug);
+      const localizacaoEvento = decomporLocalEvento(item?.local);
 
       return criarValoresIniciais(campos, {
         ...seedBase,
@@ -816,14 +1014,24 @@ export async function obterValoresModulo(
         slug: item?.slug ?? registro.id,
         categoria: item?.categoria ?? registro.categoria,
         descricao: item?.descricao ?? "",
-        imagem: item?.imagem ?? "",
-        destaqueListagem: item?.destaqueListagem ?? "",
-        localEvento: item?.local ?? "",
-        horariosEvento: item?.programacao.join(", ") ?? "",
-        extrasEvento: item?.destaques.join(", ") ?? "",
-        valorIngresso: "",
-        eventoGratuito: false,
-        publicado: registro.status === "publicado",
+        capa: criarValorInicialImagem(item?.imagem ?? "", "Capa atual"),
+        destaqueListagem: item?.destaque_listagem ?? "",
+        localEvento: localizacaoEvento.localEvento,
+        endereco: localizacaoEvento.endereco,
+        numero: localizacaoEvento.numero,
+        bairro: localizacaoEvento.bairro,
+        cidade: localizacaoEvento.cidade,
+        estado: localizacaoEvento.estado,
+        dataEventoInicio: item?.data_inicio ?? "",
+        dataEventoFim: item?.data_fim ?? item?.data_inicio ?? "",
+        dataEventoDiaUnico:
+          Boolean(item?.data_inicio) &&
+          (!item?.data_fim || item.data_inicio === item.data_fim),
+        horariosEvento: formatarListaStrings(item?.programacao),
+        extrasEvento: formatarListaStrings(item?.destaques),
+        valorIngresso: formatarMoedaInicial(item?.valor_ingresso),
+        eventoGratuito: item?.gratuito === true,
+        publicado: item?.status === "publicado",
         seoTitulo: item?.titulo ?? registro.titulo,
         whatsapp: item?.whatsapp ?? seedBase.whatsapp,
         instagram: item?.instagram ?? seedBase.instagram,
@@ -831,7 +1039,8 @@ export async function obterValoresModulo(
       });
     }
     case "hoteis": {
-      const item = await buscarHotelPorSlug(slug);
+      const item = await buscarHotelPorSlugAdmin(slug);
+      const localizacaoHotel = decomporEndereco(item?.localizacao);
 
       return criarValoresIniciais(campos, {
         ...seedBase,
@@ -839,30 +1048,32 @@ export async function obterValoresModulo(
         slug: item?.slug ?? registro.id,
         categoria: item?.categoria ?? registro.categoria,
         descricao: item?.descricao ?? "",
-        imagem: item?.imagem ?? "",
-        comodidades: item?.comodidades.join(", ") ?? "",
-        diferenciais: item?.diferenciais.join(", ") ?? "",
-        destaqueListagem: item?.destaqueListagem ?? "",
-        checkIn: item?.checkIn ?? "",
-        checkOut: item?.checkOut ?? "",
-        publicado: registro.status === "publicado",
+        logo: criarValorInicialImagem(item?.logo ?? "", "Logo atual"),
+        capa: criarValorInicialImagem(item?.imagem ?? item?.logo ?? "", "Capa atual"),
+        comodidades: formatarListaStrings(item?.comodidades),
+        diferenciais: formatarListaStrings(item?.diferenciais),
+        destaqueListagem:
+          item?.destaque_listagem ??
+          normalizarListaStrings(item?.diferenciais)[0] ??
+          normalizarListaStrings(item?.comodidades)[0] ??
+          "",
+        checkIn: item?.check_in ?? "",
+        checkOut: item?.check_out ?? "",
+        publicado: item?.status === "publicado",
         seoTitulo: item?.titulo ?? registro.titulo,
         whatsapp: item?.whatsapp ?? seedBase.whatsapp,
         instagram: item?.instagram ?? seedBase.instagram,
         whatsappResponsavel: item?.contato ?? seedBase.whatsappResponsavel,
-        endereco: item?.localizacao ?? seedBase.endereco,
+        endereco: localizacaoHotel.endereco,
+        numero: localizacaoHotel.numero,
+        bairro: localizacaoHotel.bairro,
+        cidade: localizacaoHotel.cidade,
+        estado: localizacaoHotel.estado,
       });
     }
     case "negocios": {
-      const { buscarNegocioPorSlugAdmin } = await import("@/servicos/negocios");
-      const item = await buscarNegocioPorSlugAdmin(slug);
-
-      const logoFieldValue = item?.logo
-        ? [{ id: "logo-existente", name: "logo", src: item.logo, cropFocus: "center" as const, zoom: 1 }]
-        : [];
-      const capaFieldValue = item?.imagem
-        ? [{ id: "capa-existente", name: "capa", src: item.imagem, cropFocus: "center" as const, zoom: 1 }]
-        : [];
+      const item = await buscarNegocioPorSlugAdminRaw(slug);
+      const localizacaoNegocio = decomporEndereco(item?.endereco);
 
       return criarValoresIniciais(campos, {
         ...seedBase,
@@ -870,25 +1081,29 @@ export async function obterValoresModulo(
         slug: item?.slug ?? registro.id,
         categoria: item?.categoria ?? registro.categoria,
         descricao: item?.descricao ?? "",
-        logo: logoFieldValue,
-        capa: capaFieldValue,
-        imagem: item?.imagem ?? "",
-        destaqueListagem: item?.destaqueListagem ?? "",
-        subcategoria: item?.destaqueListagem ?? "",
+        logo: criarValorInicialImagem(item?.logo ?? "", "Logo atual"),
+        capa: criarValorInicialImagem(item?.imagem ?? item?.logo ?? "", "Capa atual"),
+        destaqueListagem: item?.destaque_listagem ?? "",
+        subcategoria: item?.destaque_listagem ?? "",
         tipoNegocio: "empresa",
         username: item?.username ?? "",
-        especialidades: item?.especialidades ?? [],
-        diferenciais: item?.diferenciais ?? [],
-        publicado: registro.status === "publicado",
+        especialidades: normalizarListaStrings(item?.especialidades),
+        diferenciais: normalizarListaStrings(item?.diferenciais),
+        publicado: item?.status === "publicado",
         seoTitulo: item?.titulo ?? registro.titulo,
         whatsapp: item?.whatsapp ?? seedBase.whatsapp,
         instagram: item?.instagram ?? seedBase.instagram,
         whatsappResponsavel: item?.contato ?? seedBase.whatsappResponsavel,
-        endereco: item?.endereco ?? seedBase.endereco,
+        endereco: localizacaoNegocio.endereco,
+        numero: localizacaoNegocio.numero,
+        bairro: localizacaoNegocio.bairro,
+        cidade: localizacaoNegocio.cidade,
+        estado: localizacaoNegocio.estado,
       });
     }
     case "restaurantes": {
-      const item = await buscarRestaurantePorSlug(slug);
+      const item = await buscarRestaurantePorSlugAdmin(slug);
+      const localizacaoRestaurante = decomporEndereco(item?.endereco);
 
       return criarValoresIniciais(campos, {
         ...seedBase,
@@ -896,17 +1111,25 @@ export async function obterValoresModulo(
         slug: item?.slug ?? registro.id,
         categoria: item?.categoria ?? registro.categoria,
         descricao: item?.descricao ?? "",
-        imagem: item?.imagem ?? "",
-        destaqueListagem: item?.destaqueListagem ?? "",
+        logo: criarValorInicialImagem(item?.logo ?? "", "Logo atual"),
+        capa: criarValorInicialImagem(item?.imagem ?? item?.logo ?? "", "Capa atual"),
+        destaqueListagem:
+          item?.destaque_listagem ??
+          normalizarListaStrings(item?.especialidades)[0] ??
+          "",
         funcionamento: item?.funcionamento ?? "",
-        especialidades: item?.especialidades.join(", ") ?? "",
-        diferenciais: item?.diferenciais.join(", ") ?? "",
-        publicado: registro.status === "publicado",
+        especialidades: formatarListaStrings(item?.especialidades),
+        diferenciais: formatarListaStrings(item?.diferenciais),
+        publicado: item?.status === "publicado",
         seoTitulo: item?.titulo ?? registro.titulo,
         whatsapp: item?.whatsapp ?? seedBase.whatsapp,
         instagram: item?.instagram ?? seedBase.instagram,
         whatsappResponsavel: item?.contato ?? seedBase.whatsappResponsavel,
-        endereco: item?.endereco ?? seedBase.endereco,
+        endereco: localizacaoRestaurante.endereco,
+        numero: localizacaoRestaurante.numero,
+        bairro: localizacaoRestaurante.bairro,
+        cidade: localizacaoRestaurante.cidade,
+        estado: localizacaoRestaurante.estado,
       });
     }
     case "blog": {

@@ -373,27 +373,27 @@ export async function salvarRegistroDashboard(
       case "restaurantes": {
         const especialidades = splitCommaSeparated(values.especialidades);
         const diferenciais = splitCommaSeparated(values.diferenciais);
+        const logoUrl = extrairPrimeiraImagem(values.logo);
 
-        return await salvarPorSlug(
-          "restaurantes",
-          {
-            slug: asString(values.slug),
-            categoria: asString(values.categoria),
-            titulo: asString(values.titulo),
-            descricao: asString(values.descricao),
-            imagem: extrairPrimeiraImagem(values.capa) || extrairPrimeiraImagem(values.logo),
-            whatsapp: asString(values.whatsapp),
-            instagram: asString(values.instagram),
-            endereco: montarEndereco(values),
-            funcionamento: asString(values.funcionamento),
-            contato: asString(values.whatsappResponsavel),
-            especialidades,
-            diferenciais,
-            destaque_listagem: especialidades[0] ?? asString(values.categoria),
-            status: obterStatusPublicacao(values),
-          },
-          slugAtual
-        );
+        const payloadRestaurante: Record<string, unknown> = {
+          slug: asString(values.slug),
+          categoria: asString(values.categoria),
+          titulo: asString(values.titulo),
+          descricao: asString(values.descricao),
+          imagem: extrairPrimeiraImagem(values.capa) || logoUrl,
+          whatsapp: asString(values.whatsapp),
+          instagram: asString(values.instagram),
+          endereco: montarEndereco(values),
+          funcionamento: asString(values.funcionamento),
+          contato: asString(values.whatsappResponsavel),
+          especialidades,
+          diferenciais,
+          destaque_listagem: especialidades[0] ?? asString(values.categoria),
+          status: obterStatusPublicacao(values),
+          logo: logoUrl || null,
+        };
+
+        return await salvarPorSlug("restaurantes", payloadRestaurante, slugAtual);
       }
       case "blog": {
         const conteudoHtml = normalizarHtmlBlog(values.conteudo);
