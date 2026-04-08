@@ -9,7 +9,8 @@ type PageProps = {
 };
 
 export default async function Page({ params }: PageProps) {
-  const { id } = await params;
+  const { id: rawId } = await params;
+  const id = decodeURIComponent(rawId);
   const solicitacao = await obterSolicitacaoPublica(id);
 
   if (!solicitacao) {

@@ -73,7 +73,7 @@ export default function ListaModuloInterativa({
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 rounded-[2rem] border border-slate-200 bg-white p-6 lg:flex-row lg:items-center lg:justify-between">
+      <div className="flex flex-col gap-4 rounded-4xl border border-slate-200 bg-white p-6 lg:flex-row lg:items-center lg:justify-between">
         <div className="w-full max-w-md">
           <CampoBusca
             valor={query}
@@ -87,7 +87,7 @@ export default function ListaModuloInterativa({
           <select
             value={status}
             onChange={(event) => setStatus(event.target.value)}
-            className="rounded-[32px] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-slate-400"
+            className="rounded-4xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-slate-400"
           >
             <option value="todos">Todos</option>
             {statusOptions.map((option) => (

@@ -1,4 +1,3 @@
-import { PostgrestError } from "@supabase/supabase-js";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import {
   DashboardModuloId,
@@ -179,6 +178,27 @@ async function salvarRegistro(
     .single();
 
   if (error) {
+    // Se o erro for de política RLS ao ler o registro recém-inserido (SELECT after INSERT),
+    // tentamos inserir sem o select e usar o slug do payload como identificador.
+    if (
+      error &&
+      typeof error === "object" &&
+      "code" in error &&
+      (error as { code: string }).code === "42501"
+    ) {
+      const { error: insertError } = await supabase.from(tabela).insert(payload);
+
+      if (insertError) {
+        throw insertError;
+      }
+
+      const slug = typeof payload.slug === "string" ? payload.slug : undefined;
+      return {
+        id: slug ?? String(Date.now()),
+        slug,
+      };
+    }
+
     throw error;
   }
 
@@ -406,10 +426,6 @@ export async function salvarRegistroDashboard(
           destaque_listagem: asString(values.subcategoria),
           status: obterStatusPublicacao(values, statusFallback),
         };
-        // Só atualiza logo se o usuário enviou uma imagem
-        if (logoUrl) {
-          payloadNegocios.logo = logoUrl;
-        }
         return await salvarRegistro("negocios", payloadNegocios, persistencia);
       }
       case "restaurantes": {
@@ -499,12 +515,12 @@ export async function salvarRegistroDashboard(
         throw new Error("A persistência deste módulo ainda não foi implementada.");
     }
   } catch (error) {
-    if (error instanceof PostgrestError) {
-      throw new Error(error.message);
-    }
-
     if (error instanceof Error) {
       throw error;
+    }
+
+    if (error && typeof error === "object" && "message" in error && typeof (error as { message: unknown }).message === "string") {
+      throw new Error((error as { message: string }).message);
     }
 
     throw new Error("Não foi possível salvar o registro no Supabase.");

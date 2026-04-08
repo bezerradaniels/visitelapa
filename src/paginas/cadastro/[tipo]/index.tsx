@@ -67,7 +67,7 @@ export default function CadastroTipoPagina({
           </div>
 
           <aside className="space-y-5 xl:sticky xl:top-8 xl:self-start">
-            <div className="rounded-[2rem] border border-slate-200 bg-white p-6">
+            <div className="rounded-4xl border border-slate-200 bg-white p-6">
               <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
                 Como funciona
               </p>
@@ -87,7 +87,7 @@ export default function CadastroTipoPagina({
               </div>
             </div>
 
-            <div className="rounded-[2rem] border border-sky-200 bg-sky-50 p-6">
+            <div className="rounded-4xl border border-sky-200 bg-sky-50 p-6">
               <p className="text-xs font-semibold uppercase tracking-[0.3em] text-sky-700">
                 Preenchimento rápido
               </p>

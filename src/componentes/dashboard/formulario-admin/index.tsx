@@ -492,7 +492,7 @@ export default function FormularioAdmin({
       className="space-y-6"
     >
       {variant === "publico" ? (
-        <div className="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="rounded-4xl border border-slate-200 bg-white p-5 shadow-sm">
           <div className="flex items-center justify-between gap-4">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
@@ -604,7 +604,7 @@ export default function FormularioAdmin({
         </div>
       ) : null}
 
-      <div className={variant === "publico" ? "rounded-[2rem] border border-slate-200 bg-white p-5 shadow-sm" : "flex justify-start"}>
+      <div className={variant === "publico" ? "rounded-4xl border border-slate-200 bg-white p-5 shadow-sm" : "flex justify-start"}>
         {variant === "publico" ? (
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div className="max-w-2xl">
