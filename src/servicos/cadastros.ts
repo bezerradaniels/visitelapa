@@ -860,9 +860,15 @@ export function criarValoresIniciais(campos: FormFieldDefinition[], seed?: FormV
 
 export async function validarUsernameNegocio(username: string, currentUsername?: string) {
   const valor = username.trim().toLowerCase();
+  const currentNormalizado = currentUsername?.trim().toLowerCase();
 
   if (!valor) {
     return "Informe um nome de usuário.";
+  }
+
+  // Se o username não foi alterado, não é necessário validar unicidade
+  if (currentNormalizado && valor === currentNormalizado) {
+    return undefined;
   }
 
   if (!/^[a-z0-9_]{1,20}$/.test(valor)) {
@@ -875,8 +881,8 @@ export async function validarUsernameNegocio(username: string, currentUsername?:
 
   const { supabase } = await import("@/lib/supabase");
   let query = supabase.from("negocios").select("username").eq("username", valor);
-  if (currentUsername) {
-    query = query.neq("username", currentUsername);
+  if (currentNormalizado) {
+    query = query.neq("username", currentNormalizado);
   }
   const { data } = await query.maybeSingle();
 

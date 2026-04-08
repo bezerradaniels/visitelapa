@@ -47,12 +47,12 @@ export default async function EdicaoModuloPagina({
     ? linhas.find((item: { id: string }) => item.id === slug)
     : undefined;
   const imagem =
-    Array.isArray(valoresFormulario.capa) && valoresFormulario.capa[0]?.src
-      ? valoresFormulario.capa[0].src
-      : Array.isArray(valoresFormulario.logo) && valoresFormulario.logo[0]?.src
-        ? valoresFormulario.logo[0].src
-        : Array.isArray(valoresFormulario.galeria) && valoresFormulario.galeria[0]?.src
-          ? valoresFormulario.galeria[0].src
+    Array.isArray(valoresFormulario.capa) && valoresFormulario.capa[0] && typeof valoresFormulario.capa[0] === "object" && "src" in valoresFormulario.capa[0]
+      ? (valoresFormulario.capa[0] as { src: string }).src
+      : Array.isArray(valoresFormulario.logo) && valoresFormulario.logo[0] && typeof valoresFormulario.logo[0] === "object" && "src" in valoresFormulario.logo[0]
+        ? (valoresFormulario.logo[0] as { src: string }).src
+        : Array.isArray(valoresFormulario.galeria) && valoresFormulario.galeria[0] && typeof valoresFormulario.galeria[0] === "object" && "src" in valoresFormulario.galeria[0]
+          ? (valoresFormulario.galeria[0] as { src: string }).src
           : typeof valoresFormulario.imagem === "string" && valoresFormulario.imagem.length > 0
             ? valoresFormulario.imagem
             : undefined;

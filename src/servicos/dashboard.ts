@@ -854,7 +854,15 @@ export async function obterValoresModulo(
       });
     }
     case "negocios": {
-      const item = await buscarNegocioPorSlug(slug);
+      const { buscarNegocioPorSlugAdmin } = await import("@/servicos/negocios");
+      const item = await buscarNegocioPorSlugAdmin(slug);
+
+      const logoFieldValue = item?.logo
+        ? [{ id: "logo-existente", name: "logo", src: item.logo, cropFocus: "center" as const, zoom: 1 }]
+        : [];
+      const capaFieldValue = item?.imagem
+        ? [{ id: "capa-existente", name: "capa", src: item.imagem, cropFocus: "center" as const, zoom: 1 }]
+        : [];
 
       return criarValoresIniciais(campos, {
         ...seedBase,
@@ -862,10 +870,15 @@ export async function obterValoresModulo(
         slug: item?.slug ?? registro.id,
         categoria: item?.categoria ?? registro.categoria,
         descricao: item?.descricao ?? "",
+        logo: logoFieldValue,
+        capa: capaFieldValue,
         imagem: item?.imagem ?? "",
         destaqueListagem: item?.destaqueListagem ?? "",
+        subcategoria: item?.destaqueListagem ?? "",
         tipoNegocio: "empresa",
         username: item?.username ?? "",
+        especialidades: item?.especialidades ?? [],
+        diferenciais: item?.diferenciais ?? [],
         publicado: registro.status === "publicado",
         seoTitulo: item?.titulo ?? registro.titulo,
         whatsapp: item?.whatsapp ?? seedBase.whatsapp,

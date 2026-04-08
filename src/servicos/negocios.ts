@@ -2,6 +2,11 @@ import { Negocio } from "@/dados/negocios";
 import { supabase } from "@/lib/supabase";
 import { criarServico } from "./utils";
 
+function sanitizarArrayStrings(valor: unknown): string[] {
+  if (!Array.isArray(valor)) return [];
+  return valor.filter((item): item is string => typeof item === "string" && item.trim().length > 0);
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function mapRow(row: any): Negocio {
   return {
@@ -17,9 +22,9 @@ function mapRow(row: any): Negocio {
     endereco: row.endereco,
     atendimento: row.atendimento,
     contato: row.contato,
-    sobre: row.sobre ?? [],
-    especialidades: row.especialidades ?? [],
-    diferenciais: row.diferenciais ?? [],
+    sobre: sanitizarArrayStrings(row.sobre),
+    especialidades: sanitizarArrayStrings(row.especialidades),
+    diferenciais: sanitizarArrayStrings(row.diferenciais),
     destaqueListagem: row.destaque_listagem,
   };
 }
@@ -33,6 +38,16 @@ const servico = criarServico<Negocio>({
 export const listarNegocios = servico.listar;
 export const buscarNegocioPorSlug = servico.buscarPorSlug;
 export const listarFiltrosNegocios = servico.listarFiltros;
+
+export async function buscarNegocioPorSlugAdmin(slug: string): Promise<Negocio | undefined> {
+  const { data, error } = await supabase
+    .from("negocios")
+    .select("*")
+    .eq("slug", slug)
+    .maybeSingle();
+  if (error) throw error;
+  return data ? mapRow(data) : undefined;
+}
 
 export async function buscarNegocioPorUsername(username: string): Promise<Negocio | undefined> {
   const { data, error } = await supabase

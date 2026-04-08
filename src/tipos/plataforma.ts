@@ -103,7 +103,7 @@ export type FormFieldDefinition = {
   }>;
 };
 
-export type FormValue = string | number | boolean | ImageFieldValue;
+export type FormValue = string | number | boolean | string[] | ImageFieldValue;
 
 export type FormValues = Record<string, FormValue>;
 

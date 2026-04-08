@@ -344,28 +344,32 @@ export async function salvarRegistroDashboard(
           slugAtual
         );
       }
-      case "negocios":
-        return await salvarPorSlug(
-          "negocios",
-          {
-            slug: asString(values.slug),
-            username: asString(values.username).toLowerCase(),
-            categoria: asString(values.categoria),
-            titulo: asString(values.titulo),
-            descricao: asString(values.descricao),
-            imagem: extrairPrimeiraImagem(values.capa) || extrairPrimeiraImagem(values.logo),
-            whatsapp: asString(values.whatsapp),
-            instagram: asString(values.instagram),
-            endereco: montarEndereco(values),
-            atendimento: "",
-            contato: asString(values.whatsappResponsavel),
-            especialidades: Array.isArray(values.especialidades) ? values.especialidades.filter(Boolean) : [],
-            diferenciais: Array.isArray(values.diferenciais) ? values.diferenciais.filter(Boolean) : [],
-            destaque_listagem: asString(values.subcategoria),
-            status: obterStatusPublicacao(values),
-          },
-          slugAtual
-        );
+      case "negocios": {
+        const logoUrl = extrairPrimeiraImagem(values.logo);
+        const capaUrl = extrairPrimeiraImagem(values.capa) || logoUrl;
+        const payloadNegocios: Record<string, unknown> = {
+          slug: asString(values.slug),
+          username: asString(values.username).toLowerCase(),
+          categoria: asString(values.categoria),
+          titulo: asString(values.titulo),
+          descricao: asString(values.descricao),
+          imagem: capaUrl,
+          whatsapp: asString(values.whatsapp),
+          instagram: asString(values.instagram),
+          endereco: montarEndereco(values),
+          atendimento: "",
+          contato: asString(values.whatsappResponsavel),
+          especialidades: Array.isArray(values.especialidades) ? values.especialidades.filter(Boolean) : [],
+          diferenciais: Array.isArray(values.diferenciais) ? values.diferenciais.filter(Boolean) : [],
+          destaque_listagem: asString(values.subcategoria),
+          status: obterStatusPublicacao(values),
+        };
+        // Só atualiza logo se o usuário enviou uma imagem
+        if (logoUrl) {
+          payloadNegocios.logo = logoUrl;
+        }
+        return await salvarPorSlug("negocios", payloadNegocios, slugAtual);
+      }
       case "restaurantes": {
         const especialidades = splitCommaSeparated(values.especialidades);
         const diferenciais = splitCommaSeparated(values.diferenciais);

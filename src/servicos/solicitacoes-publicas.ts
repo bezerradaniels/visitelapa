@@ -42,7 +42,13 @@ function asString(value: unknown) {
 }
 
 function isImageFieldValue(value: FormValue): value is ImageFieldValue {
-  return Array.isArray(value);
+  return (
+    Array.isArray(value) &&
+    value.length > 0 &&
+    typeof value[0] === "object" &&
+    value[0] !== null &&
+    "src" in (value[0] as object)
+  );
 }
 
 function serializarCampoImagem(nomeCampo: string, value: ImageFieldValue) {

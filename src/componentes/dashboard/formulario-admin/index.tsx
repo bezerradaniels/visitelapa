@@ -205,9 +205,21 @@ export default function FormularioAdmin({
   successRedirectHref,
 }: FormularioAdminProps) {
   const router = useRouter();
-  const [values, setValues] = useState<FormValues>(() =>
-    criarValoresIniciais(fields, initialValues)
-  );
+  const storageKey = variant === "publico" && modulo ? `cadastro_draft_${modulo}` : null;
+  const [values, setValues] = useState<FormValues>(() => {
+    const base = criarValoresIniciais(fields, initialValues);
+    if (variant !== "publico" || !modulo || typeof window === "undefined") return base;
+    try {
+      const salvo = window.localStorage.getItem(`cadastro_draft_${modulo}`);
+      if (salvo) {
+        const restaurado = JSON.parse(salvo) as FormValues;
+        return { ...base, ...restaurado };
+      }
+    } catch {
+      // ignora erros de localStorage
+    }
+    return base;
+  });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submittedValues, setSubmittedValues] = useState<FormValues | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -253,7 +265,26 @@ export default function FormularioAdmin({
         }
       }
 
-      return normalizarValoresFormulario(fields, nextValues);
+      const normalized = normalizarValoresFormulario(fields, nextValues);
+
+      if (storageKey) {
+        try {
+          // Salva apenas campos de texto (sem imagens/arrays grandes)
+          const padraoSalvar: FormValues = {};
+          for (const [k, v] of Object.entries(normalized)) {
+            if (typeof v === "string" || typeof v === "boolean" || typeof v === "number") {
+              padraoSalvar[k] = v;
+            } else if (Array.isArray(v) && v.every((i) => typeof i === "string")) {
+              padraoSalvar[k] = v;
+            }
+          }
+          window.localStorage.setItem(storageKey, JSON.stringify(padraoSalvar));
+        } catch {
+          // ignora erros de localStorage
+        }
+      }
+
+      return normalized;
     });
 
     setErrors((current) => {
@@ -394,6 +425,9 @@ export default function FormularioAdmin({
             }
 
             if (successRedirectHref) {
+              if (storageKey) {
+                try { window.localStorage.removeItem(storageKey); } catch { /* noop */ }
+              }
               router.push(successRedirectHref);
               return;
             }
