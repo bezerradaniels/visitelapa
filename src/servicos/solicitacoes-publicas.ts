@@ -48,7 +48,7 @@ function isImageFieldValue(value: FormValue): value is ImageFieldValue {
 function serializarCampoImagem(nomeCampo: string, value: ImageFieldValue) {
   return value.map((imagem, index) => {
     const manterSrcCompleto =
-      !imagem.src.startsWith("data:") || nomeCampo === "logo" || nomeCampo === "capa" || index === 0;
+      !imagem.src?.startsWith("data:") || nomeCampo === "logo" || nomeCampo === "capa" || index === 0;
 
     return {
       id: imagem.id,
