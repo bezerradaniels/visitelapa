@@ -23,8 +23,22 @@ export type HotelAdminRow = {
   atualizado_em?: string | null;
 };
 
+function sanitizarArrayStrings(valor: unknown): string[] {
+  if (!Array.isArray(valor)) {
+    return [];
+  }
+
+  return valor.filter(
+    (item): item is string => typeof item === "string" && item.trim().length > 0
+  );
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function mapRow(row: any): Hotel {
+  const sobre = sanitizarArrayStrings(row.sobre);
+  const comodidades = sanitizarArrayStrings(row.comodidades);
+  const diferenciais = sanitizarArrayStrings(row.diferenciais);
+
   return {
     slug: row.slug,
     categoria: row.categoria,
@@ -37,13 +51,13 @@ function mapRow(row: any): Hotel {
     checkIn: row.check_in,
     checkOut: row.check_out,
     contato: row.contato,
-    sobre: row.sobre ?? [],
-    comodidades: row.comodidades ?? [],
-    diferenciais: row.diferenciais ?? [],
+    sobre,
+    comodidades,
+    diferenciais,
     destaqueListagem:
       row.destaque_listagem ||
-      row.diferenciais?.[0] ||
-      row.comodidades?.[0] ||
+      diferenciais[0] ||
+      comodidades[0] ||
       row.categoria,
   };
 }

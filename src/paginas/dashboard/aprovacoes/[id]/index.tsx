@@ -72,7 +72,7 @@ export default function AprovacaoDetalhePagina({
       <CabecalhoSecao
         eyebrow="Aprovação"
         titulo={solicitacao.titulo}
-        descricao="Revise os dados enviados no formulário público, salve ajustes se necessário e publique apenas depois da validação administrativa."
+        descricao="Revise o cadastro pendente já salvo na tabela final, ajuste o que for necessário e publique apenas depois da validação administrativa."
         backHref="/dashboard/aprovacoes"
         backLabel="Voltar para a fila"
       />
@@ -81,7 +81,7 @@ export default function AprovacaoDetalhePagina({
         aside={
           <>
             <BlocoListaInformacoes
-              titulo="Resumo da solicitação"
+              titulo="Resumo do cadastro"
               itens={[
                 {
                   label: "Tipo",
@@ -102,31 +102,29 @@ export default function AprovacaoDetalhePagina({
               ]}
             />
 
-            <BlocoListaInformacoes
-              titulo="Contato do responsável"
-              itens={[
-                {
-                  label: "Responsável",
-                  value: solicitacao.responsavel || "Não informado",
-                },
-                {
-                  label: "Email",
-                  value: solicitacao.contatoEmail || "Não informado",
-                },
-                {
-                  label: "WhatsApp",
-                  value: solicitacao.contatoWhatsapp || "Não informado",
-                },
-                ...(slugPublicacao
-                  ? [
-                      {
-                        label: "Slug publicado",
-                        value: slugPublicacao,
-                      },
-                    ]
-                  : []),
-              ]}
-            />
+            {solicitacao.contatoWhatsapp || slugPublicacao ? (
+              <BlocoListaInformacoes
+                titulo="Dados disponíveis"
+                itens={[
+                  ...(solicitacao.contatoWhatsapp
+                    ? [
+                        {
+                          label: "WhatsApp",
+                          value: solicitacao.contatoWhatsapp,
+                        },
+                      ]
+                    : []),
+                  ...(slugPublicacao
+                    ? [
+                        {
+                          label: "Slug do cadastro",
+                          value: slugPublicacao,
+                        },
+                      ]
+                    : []),
+                ]}
+              />
+            ) : null}
 
             {solicitacao.status !== "publicado" ? (
               <AcoesEditoriais
@@ -144,8 +142,8 @@ export default function AprovacaoDetalhePagina({
                     label: "Resultado",
                     value:
                       slugPublicacao
-                        ? `A solicitação já gerou a publicação ${slugPublicacao}.`
-                        : "A solicitação já foi publicada no módulo correspondente.",
+                        ? `Este cadastro já foi publicado com o slug ${slugPublicacao}.`
+                        : "Este cadastro já foi publicado no módulo correspondente.",
                   },
                 ]}
               />
@@ -167,8 +165,8 @@ export default function AprovacaoDetalhePagina({
             fields={campos}
             initialValues={solicitacao.payload}
             submitLabel="Salvar ajustes"
-            successTitle="Ajustes salvos na solicitação"
-            successDescription="As alterações ficaram registradas apenas nesta solicitação pendente. O site público só muda depois da ação de aprovar."
+            successTitle="Ajustes salvos no cadastro"
+            successDescription="As alterações foram salvas no registro final com status pendente. O site público só muda depois da ação de aprovar."
             submitPath={`/api/dashboard/aprovacoes/${solicitacao.id}`}
             submitBody={{ action: "salvar" }}
             currentUsername={

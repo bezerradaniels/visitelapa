@@ -181,6 +181,13 @@ const ACAO_RAPIDA_CATEGORIA_NEGOCIOS = [
   { label: "Contabilidade", value: "Contabilidade" },
 ];
 
+const VALORES_PADRAO_NOVO_CADASTRO: Partial<FormValues> = {
+  estado: "BA",
+  cidade: "Bom Jesus da Lapa",
+  origemEstado: "BA",
+  origemCidade: "Bom Jesus da Lapa",
+};
+
 const CAMPOS_LOCALIZACAO: FormFieldDefinition[] = [
   {
     kind: "text",
@@ -852,7 +859,7 @@ export function criarValoresIniciais(campos: FormFieldDefinition[], seed?: FormV
             : Boolean(startValue) && (!endValue || startValue === endValue);
       }
     } else {
-      acc[campo.name] = seed?.[campo.name] ?? "";
+      acc[campo.name] = seed?.[campo.name] ?? VALORES_PADRAO_NOVO_CADASTRO[campo.name] ?? "";
     }
     return acc;
   }, {});

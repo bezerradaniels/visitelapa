@@ -418,7 +418,7 @@ export async function listarEstatisticasDashboard(): Promise<DashboardStat[]> {
       id: "pendentes",
       label: "Aguardando aprovação",
       valor: `${pendentes}`,
-      descricao: "Solicitações públicas aguardando análise.",
+      descricao: "Cadastros finais aguardando análise editorial.",
     },
     {
       id: "contatos",

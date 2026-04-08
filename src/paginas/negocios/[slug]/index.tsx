@@ -97,7 +97,7 @@ export default async function NegocioDetalhePagina({
 
       <div className="grid gap-6 md:grid-cols-2">
         <BlocoDestaques
-          titulo="Especialidades"
+          titulo="Serviços"
           itens={negocio.especialidades}
         />
         <BlocoDestaques

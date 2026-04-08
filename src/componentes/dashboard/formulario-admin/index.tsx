@@ -61,7 +61,12 @@ type FormularioAdminProps = {
   submitPath?: string;
   submitBody?: Record<string, unknown>;
   successRedirectHref?: string;
+  requiresPublishedEditConfirmation?: boolean;
+  publishedEditConfirmMessage?: string;
 };
+
+const DEFAULT_PUBLISHED_EDIT_CONFIRM_MESSAGE =
+  "Este conteúdo já está publicado. As alterações serão exibidas no portal imediatamente após salvar. Deseja continuar?";
 
 function groupFieldsBySection(fields: FormFieldDefinition[]) {
   return fields.reduce<Record<string, FormFieldDefinition[]>>((acc, field) => {
@@ -203,6 +208,8 @@ export default function FormularioAdmin({
   submitPath,
   submitBody,
   successRedirectHref,
+  requiresPublishedEditConfirmation = false,
+  publishedEditConfirmMessage,
 }: FormularioAdminProps) {
   const router = useRouter();
   const storageKey = variant === "publico" && modulo ? `cadastro_draft_${modulo}` : null;
@@ -388,6 +395,17 @@ export default function FormularioAdmin({
       return;
     }
 
+    if (
+      variant === "dashboard" &&
+      registroId &&
+      requiresPublishedEditConfirmation &&
+      !window.confirm(
+        publishedEditConfirmMessage ?? DEFAULT_PUBLISHED_EDIT_CONFIRM_MESSAGE
+      )
+    ) {
+      return;
+    }
+
     startTransition(() => {
       void (async () => {
         setValues(valoresNormalizados);
@@ -474,7 +492,7 @@ export default function FormularioAdmin({
       className="space-y-6"
     >
       {variant === "publico" ? (
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-sm">
           <div className="flex items-center justify-between gap-4">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
@@ -491,6 +509,14 @@ export default function FormularioAdmin({
               className="h-full rounded-md bg-linear-to-r from-sky-500 via-violet-500 to-pink-500 transition-all duration-500 ease-out animate-pulse"
               style={{ width: `${progresso}%` }}
             />
+          </div>
+          <div className="mt-4 flex flex-wrap gap-2 text-xs font-medium">
+            <span className="rounded-full bg-slate-100 px-3 py-1 text-slate-700">
+              Rascunho salvo neste navegador
+            </span>
+            <span className="rounded-full bg-sky-100 px-3 py-1 text-sky-800">
+              BA e Bom Jesus da Lapa já vêm preenchidos quando aplicável
+            </span>
           </div>
         </div>
       ) : null}
@@ -578,14 +604,35 @@ export default function FormularioAdmin({
         </div>
       ) : null}
 
-      <div className="flex justify-start">
-        <button
-          type="submit"
-          disabled={isPending}
-          className="inline-flex min-w-44 cursor-pointer items-center justify-center rounded-md bg-teal-500 px-5 py-3 text-sm font-semibold text-white transition hover:bg-teal-600 disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          {isPending ? "Salvando..." : submitLabel}
-        </button>
+      <div className={variant === "publico" ? "rounded-[2rem] border border-slate-200 bg-white p-5 shadow-sm" : "flex justify-start"}>
+        {variant === "publico" ? (
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div className="max-w-2xl">
+              <p className="text-sm font-semibold text-slate-950">
+                Revise os contatos e a localização antes de enviar
+              </p>
+              <p className="mt-2 text-sm leading-6 text-slate-600">
+                Esses dados ajudam a equipe editorial a validar o cadastro com mais rapidez.
+              </p>
+            </div>
+
+            <button
+              type="submit"
+              disabled={isPending}
+              className="inline-flex min-w-52 cursor-pointer items-center justify-center rounded-xl bg-teal-500 px-5 py-3 text-sm font-semibold text-white transition hover:bg-teal-600 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {isPending ? "Enviando cadastro..." : submitLabel}
+            </button>
+          </div>
+        ) : (
+          <button
+            type="submit"
+            disabled={isPending}
+            className="inline-flex min-w-44 cursor-pointer items-center justify-center rounded-md bg-teal-500 px-5 py-3 text-sm font-semibold text-white transition hover:bg-teal-600 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {isPending ? "Salvando..." : submitLabel}
+          </button>
+        )}
       </div>
     </form>
   );

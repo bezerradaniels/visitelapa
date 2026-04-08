@@ -1,8 +1,10 @@
 import { createServerSupabaseClient } from "@/lib/supabase-server";
-import { aplicarFormatacoesCadastro } from "@/servicos/formulario-formatacao";
+import {
+  aplicarFormatacoesCadastro,
+  formatarMoedaBrlPorNumero,
+} from "@/servicos/formulario-formatacao";
 import {
   CadastroTipoId,
-  FormValue,
   FormValues,
   ImageFieldValue,
   PublicSubmission,
@@ -10,7 +12,11 @@ import {
   PublicSubmissionDetail,
   StatusEditorial,
 } from "@/tipos/plataforma";
-import { obterCamposCadastro, validarCamposObrigatorios } from "./cadastros";
+import {
+  criarValoresIniciais,
+  obterCamposCadastro,
+  validarCamposObrigatorios,
+} from "./cadastros";
 import { salvarRegistroDashboard } from "./dashboard-persistencia";
 
 const TABELA_POR_TIPO: Record<CadastroTipoId, string> = {
@@ -21,22 +27,23 @@ const TABELA_POR_TIPO: Record<CadastroTipoId, string> = {
   restaurantes: "restaurantes",
 };
 
-async function verificarSlugExistente(
-  tipo: CadastroTipoId,
-  slug: string
-): Promise<string | undefined> {
-  const supabase = createServerSupabaseClient();
-  const tabela = TABELA_POR_TIPO[tipo];
-  if (!tabela || !slug) return undefined;
+const TIPOS_CADASTRO_PUBLICO = Object.keys(TABELA_POR_TIPO) as CadastroTipoId[];
 
-  const { data } = await supabase
-    .from(tabela)
-    .select("slug")
-    .eq("slug", slug)
-    .maybeSingle();
+const STATUSS_DA_FILA: StatusEditorial[] = [
+  "pendente_aprovacao",
+  "revisao",
+  "rejeitado",
+  "arquivado",
+];
 
-  return data?.slug ?? undefined;
-}
+const STATUS_EDITORIAIS = new Set<StatusEditorial>([
+  "rascunho",
+  "pendente_aprovacao",
+  "revisao",
+  "publicado",
+  "rejeitado",
+  "arquivado",
+]);
 
 type ResultadoSolicitacaoPublica = {
   id: string;
@@ -49,91 +56,425 @@ type ResultadoAcaoSolicitacaoPublica = {
   slugPublicacao?: string;
 };
 
-type SolicitacaoPublicaDbRow = {
-  id: string;
-  tipo: CadastroTipoId;
-  titulo: string;
-  responsavel: string;
-  contato_email: string;
-  contato_whatsapp: string;
-  status: StatusEditorial;
-  payload: unknown;
-  criado_em: string;
-  atualizado_em: string;
+type RegistroPublicacaoRow = {
+  id?: unknown;
+  slug?: unknown;
+  titulo?: unknown;
+  categoria?: unknown;
+  descricao?: unknown;
+  imagem?: unknown;
+  logo?: unknown;
+  whatsapp?: unknown;
+  instagram?: unknown;
+  contato?: unknown;
+  status?: unknown;
+  created_at?: unknown;
+  criado_em?: unknown;
+  updated_at?: unknown;
+  atualizado_em?: unknown;
+  [key: string]: unknown;
 };
 
 function asString(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
 }
 
-function isImageFieldValue(value: FormValue): value is ImageFieldValue {
-  return (
-    Array.isArray(value) &&
-    value.length > 0 &&
-    typeof value[0] === "object" &&
-    value[0] !== null &&
-    "src" in (value[0] as object)
+function asId(value: unknown) {
+  if (typeof value === "string") {
+    return value.trim();
+  }
+
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return String(value);
+  }
+
+  return "";
+}
+
+function asStatusEditorial(
+  value: unknown,
+  fallback: StatusEditorial = "rascunho"
+): StatusEditorial {
+  return typeof value === "string" && STATUS_EDITORIAIS.has(value as StatusEditorial)
+    ? (value as StatusEditorial)
+    : fallback;
+}
+
+function criarIdentificadorSolicitacao(tipo: CadastroTipoId, id: string) {
+  return `${tipo}:${id}`;
+}
+
+function lerIdentificadorSolicitacao(identificador: string) {
+  const separador = identificador.indexOf(":");
+
+  if (separador <= 0) {
+    throw new Error("Identificador de solicitação inválido.");
+  }
+
+  const tipo = identificador.slice(0, separador);
+  const id = identificador.slice(separador + 1).trim();
+
+  if (!id || !(tipo in TABELA_POR_TIPO)) {
+    throw new Error("Identificador de solicitação inválido.");
+  }
+
+  return {
+    tipo: tipo as CadastroTipoId,
+    id,
+  };
+}
+
+function criarValorInicialImagem(
+  src?: string | null,
+  nome = "Imagem atual"
+): ImageFieldValue {
+  if (!src?.trim()) {
+    return [];
+  }
+
+  return [
+    {
+      id: `${nome.toLowerCase().replace(/\s+/g, "-")}-existente`,
+      name: nome,
+      src: src.trim(),
+      cropFocus: "center",
+      zoom: 1,
+    },
+  ];
+}
+
+function normalizarListaStrings(valor: unknown): string[] {
+  if (!Array.isArray(valor)) {
+    return [];
+  }
+
+  return valor.filter(
+    (item): item is string => typeof item === "string" && item.trim().length > 0
   );
 }
 
-function serializarCampoImagem(nomeCampo: string, value: ImageFieldValue) {
-  return value.map((imagem, index) => {
-    const manterSrcCompleto =
-      !imagem.src?.startsWith("data:") || nomeCampo === "logo" || nomeCampo === "capa" || index === 0;
+function formatarListaStrings(valor: unknown) {
+  return normalizarListaStrings(valor).join(", ");
+}
+
+function formatarMoedaInicial(valor: unknown) {
+  return typeof valor === "number" && Number.isFinite(valor)
+    ? formatarMoedaBrlPorNumero(valor)
+    : "";
+}
+
+function decomporEndereco(enderecoCompleto: unknown) {
+  const texto = typeof enderecoCompleto === "string" ? enderecoCompleto.trim() : "";
+
+  if (!texto) {
+    return {
+      endereco: "",
+      numero: "",
+      bairro: "",
+      cidade: "",
+      estado: "",
+    };
+  }
+
+  const partes = texto
+    .split(",")
+    .map((parte) => parte.trim())
+    .filter(Boolean);
+
+  if (partes.length >= 5) {
+    const estado = partes.pop() ?? "";
+    const cidade = partes.pop() ?? "";
+    const bairro = partes.pop() ?? "";
+    const numero = partes.pop() ?? "";
 
     return {
-      id: imagem.id,
-      name: imagem.name,
-      src: manterSrcCompleto ? imagem.src : "",
-      srcOmitido: !manterSrcCompleto,
-      cropFocus: imagem.cropFocus,
-      zoom: imagem.zoom,
+      endereco: partes.join(", "),
+      numero,
+      bairro,
+      cidade,
+      estado,
     };
-  });
-}
-
-export function serializarPayloadSolicitacaoPublica(values: FormValues) {
-  const valoresNormalizados = aplicarFormatacoesCadastro({ ...values });
-  const payload: Record<string, unknown> = {};
-
-  for (const [nomeCampo, value] of Object.entries(valoresNormalizados)) {
-    if (isImageFieldValue(value)) {
-      payload[nomeCampo] = serializarCampoImagem(nomeCampo, value);
-      continue;
-    }
-
-    payload[nomeCampo] = value;
   }
 
-  return payload as FormValues;
-}
-
-function normalizarPayload(value: unknown): FormValues {
-  if (!value || typeof value !== "object" || Array.isArray(value)) {
-    return {};
+  if (partes.length === 4) {
+    return {
+      endereco: partes[0] ?? "",
+      numero: "",
+      bairro: partes[1] ?? "",
+      cidade: partes[2] ?? "",
+      estado: partes[3] ?? "",
+    };
   }
 
-  return value as FormValues;
-}
+  if (partes.length === 3) {
+    return {
+      endereco: partes[0] ?? "",
+      numero: "",
+      bairro: "",
+      cidade: partes[1] ?? "",
+      estado: partes[2] ?? "",
+    };
+  }
 
-function mapSolicitacaoRow(row: SolicitacaoPublicaDbRow): PublicSubmissionDetail {
-  const payload = normalizarPayload(row.payload);
+  if (partes.length === 2) {
+    return {
+      endereco: partes[0] ?? "",
+      numero: "",
+      bairro: "",
+      cidade: partes[1] ?? "",
+      estado: "",
+    };
+  }
 
   return {
-    id: String(row.id),
-    tipo: row.tipo,
-    titulo: row.titulo || asString(payload.titulo),
-    responsavel: row.responsavel || asString(payload.nomeContato),
-    contatoEmail: row.contato_email || asString(payload.emailResponsavel),
-    contatoWhatsapp:
-      row.contato_whatsapp ||
-      asString(payload.whatsappResponsavel) ||
-      asString(payload.whatsapp),
-    status: row.status,
-    criadoEm: row.criado_em,
-    atualizadoEm: row.atualizado_em,
-    payload,
+    endereco: texto,
+    numero: "",
+    bairro: "",
+    cidade: "",
+    estado: "",
   };
+}
+
+function decomporLocalEvento(localCompleto: unknown) {
+  const texto = typeof localCompleto === "string" ? localCompleto.trim() : "";
+
+  if (!texto) {
+    return {
+      localEvento: "",
+      ...decomporEndereco(""),
+    };
+  }
+
+  const separador = " - ";
+  const indiceSeparador = texto.lastIndexOf(separador);
+
+  if (indiceSeparador === -1) {
+    return {
+      localEvento: texto,
+      ...decomporEndereco(""),
+    };
+  }
+
+  const localEvento = texto.slice(0, indiceSeparador).trim();
+  const endereco = texto.slice(indiceSeparador + separador.length).trim();
+
+  return {
+    localEvento,
+    ...decomporEndereco(endereco),
+  };
+}
+
+function obterCriadoEm(row: RegistroPublicacaoRow) {
+  return (
+    asString(row.created_at) ||
+    asString(row.criado_em) ||
+    asString(row.updated_at) ||
+    asString(row.atualizado_em)
+  );
+}
+
+function obterAtualizadoEm(row: RegistroPublicacaoRow) {
+  return asString(row.updated_at) || asString(row.atualizado_em) || obterCriadoEm(row);
+}
+
+function obterContatoWhatsapp(row: RegistroPublicacaoRow) {
+  return asString(row.contato) || asString(row.whatsapp);
+}
+
+function criarSeedBaseCadastro() {
+  return {
+    nomeContato: "",
+    whatsappResponsavel: "",
+    whatsapp: "",
+    instagram: "",
+    endereco: "",
+    numero: "",
+    bairro: "",
+    cidade: "",
+    estado: "",
+    origemCidade: "",
+    origemEstado: "",
+    destinoCidade: "",
+    destinoEstado: "",
+    horariosEvento: "",
+    valorFinalParcelado: "",
+    aceitaTermos: false,
+    seoTitulo: "",
+    seoDescricao: "",
+    username: "",
+  } satisfies FormValues;
+}
+
+function montarPayloadCadastro(tipo: CadastroTipoId, row: RegistroPublicacaoRow): FormValues {
+  const campos = obterCamposCadastro(tipo);
+  const seedBase = criarSeedBaseCadastro();
+  const status = asStatusEditorial(row.status);
+  const slug = asString(row.slug);
+  const titulo = asString(row.titulo);
+  const categoria = asString(row.categoria);
+  const descricao = asString(row.descricao);
+
+  switch (tipo) {
+    case "pacotes":
+      return criarValoresIniciais(campos, {
+        ...seedBase,
+        titulo,
+        slug,
+        categoria,
+        descricao,
+        logo: criarValorInicialImagem(asString(row.logo), "Logo atual"),
+        capa: criarValorInicialImagem(
+          asString(row.imagem) || asString(row.logo),
+          "Capa atual"
+        ),
+        dataIda: asString(row.data_ida),
+        dataRetorno: asString(row.data_retorno),
+        origemCidade: asString(row.origem_cidade),
+        origemEstado: asString(row.origem_estado),
+        destinoCidade: asString(row.destino_cidade),
+        destinoEstado: asString(row.destino_estado),
+        valorVista: formatarMoedaInicial(row.valor_vista),
+        valorParcelado: formatarMoedaInicial(row.valor_parcelado),
+        parcelas: row.parcelas ? String(row.parcelas) : "",
+        comodidades: formatarListaStrings(row.comodidades),
+        valorFinalParcelado: formatarMoedaInicial(row.valor_final_parcelado),
+        publicado: status === "publicado",
+        seoTitulo: titulo,
+        whatsapp: asString(row.whatsapp),
+        instagram: asString(row.instagram),
+      });
+    case "eventos": {
+      const localizacaoEvento = decomporLocalEvento(row.local);
+
+      return criarValoresIniciais(campos, {
+        ...seedBase,
+        titulo,
+        slug,
+        categoria,
+        descricao,
+        capa: criarValorInicialImagem(asString(row.imagem), "Capa atual"),
+        destaqueListagem: asString(row.destaque_listagem),
+        localEvento: localizacaoEvento.localEvento,
+        endereco: localizacaoEvento.endereco,
+        numero: localizacaoEvento.numero,
+        bairro: localizacaoEvento.bairro,
+        cidade: localizacaoEvento.cidade,
+        estado: localizacaoEvento.estado,
+        dataEventoInicio: asString(row.data_inicio),
+        dataEventoFim: asString(row.data_fim) || asString(row.data_inicio),
+        dataEventoDiaUnico:
+          Boolean(asString(row.data_inicio)) &&
+          (!asString(row.data_fim) || asString(row.data_inicio) === asString(row.data_fim)),
+        horariosEvento: formatarListaStrings(row.programacao),
+        extrasEvento: formatarListaStrings(row.destaques),
+        valorIngresso: formatarMoedaInicial(row.valor_ingresso),
+        eventoGratuito: row.gratuito === true,
+        publicado: status === "publicado",
+        seoTitulo: titulo,
+        whatsapp: asString(row.whatsapp),
+        instagram: asString(row.instagram),
+        whatsappResponsavel: asString(row.contato),
+      });
+    }
+    case "hoteis": {
+      const localizacaoHotel = decomporEndereco(row.localizacao);
+
+      return criarValoresIniciais(campos, {
+        ...seedBase,
+        titulo,
+        slug,
+        categoria,
+        descricao,
+        logo: criarValorInicialImagem(asString(row.logo), "Logo atual"),
+        capa: criarValorInicialImagem(
+          asString(row.imagem) || asString(row.logo),
+          "Capa atual"
+        ),
+        comodidades: formatarListaStrings(row.comodidades),
+        diferenciais: formatarListaStrings(row.diferenciais),
+        destaqueListagem:
+          asString(row.destaque_listagem) ||
+          normalizarListaStrings(row.diferenciais)[0] ||
+          normalizarListaStrings(row.comodidades)[0] ||
+          "",
+        checkIn: asString(row.check_in),
+        checkOut: asString(row.check_out),
+        publicado: status === "publicado",
+        seoTitulo: titulo,
+        whatsapp: asString(row.whatsapp),
+        instagram: asString(row.instagram),
+        whatsappResponsavel: asString(row.contato),
+        endereco: localizacaoHotel.endereco,
+        numero: localizacaoHotel.numero,
+        bairro: localizacaoHotel.bairro,
+        cidade: localizacaoHotel.cidade,
+        estado: localizacaoHotel.estado,
+      });
+    }
+    case "negocios": {
+      const localizacaoNegocio = decomporEndereco(row.endereco);
+
+      return criarValoresIniciais(campos, {
+        ...seedBase,
+        titulo,
+        slug,
+        categoria,
+        descricao,
+        logo: criarValorInicialImagem(asString(row.logo), "Logo atual"),
+        capa: criarValorInicialImagem(
+          asString(row.imagem) || asString(row.logo),
+          "Capa atual"
+        ),
+        destaqueListagem: asString(row.destaque_listagem),
+        subcategoria: asString(row.destaque_listagem),
+        tipoNegocio: "empresa",
+        username: asString(row.username),
+        especialidades: normalizarListaStrings(row.especialidades),
+        diferenciais: normalizarListaStrings(row.diferenciais),
+        publicado: status === "publicado",
+        seoTitulo: titulo,
+        whatsapp: asString(row.whatsapp),
+        instagram: asString(row.instagram),
+        whatsappResponsavel: asString(row.contato),
+        endereco: localizacaoNegocio.endereco,
+        numero: localizacaoNegocio.numero,
+        bairro: localizacaoNegocio.bairro,
+        cidade: localizacaoNegocio.cidade,
+        estado: localizacaoNegocio.estado,
+      });
+    }
+    case "restaurantes": {
+      const localizacaoRestaurante = decomporEndereco(row.endereco);
+
+      return criarValoresIniciais(campos, {
+        ...seedBase,
+        titulo,
+        slug,
+        categoria,
+        descricao,
+        logo: criarValorInicialImagem(asString(row.logo), "Logo atual"),
+        capa: criarValorInicialImagem(
+          asString(row.imagem) || asString(row.logo),
+          "Capa atual"
+        ),
+        destaqueListagem:
+          asString(row.destaque_listagem) || normalizarListaStrings(row.especialidades)[0] || "",
+        funcionamento: asString(row.funcionamento),
+        especialidades: formatarListaStrings(row.especialidades),
+        diferenciais: formatarListaStrings(row.diferenciais),
+        publicado: status === "publicado",
+        seoTitulo: titulo,
+        whatsapp: asString(row.whatsapp),
+        instagram: asString(row.instagram),
+        whatsappResponsavel: asString(row.contato),
+        endereco: localizacaoRestaurante.endereco,
+        numero: localizacaoRestaurante.numero,
+        bairro: localizacaoRestaurante.bairro,
+        cidade: localizacaoRestaurante.cidade,
+        estado: localizacaoRestaurante.estado,
+      });
+    }
+  }
 }
 
 function validarCamposSolicitacao(tipo: CadastroTipoId, values: FormValues) {
@@ -147,113 +488,41 @@ function validarCamposSolicitacao(tipo: CadastroTipoId, values: FormValues) {
   throw new Error("Revise os campos obrigatórios antes de continuar.");
 }
 
-function mesclarPayloadSolicitacao(payloadAtual: FormValues, values?: FormValues) {
-  if (!values) {
-    return payloadAtual;
-  }
-
-  return {
-    ...payloadAtual,
-    ...serializarPayloadSolicitacaoPublica(values),
-  };
-}
-
-function montarResumoSolicitacao(
-  payload: FormValues,
-  solicitacaoAtual: PublicSubmissionDetail
-) {
-  return {
-    titulo: asString(payload.titulo) || solicitacaoAtual.titulo,
-    responsavel: asString(payload.nomeContato) || solicitacaoAtual.responsavel,
-    contatoEmail: asString(payload.emailResponsavel) || solicitacaoAtual.contatoEmail,
-    contatoWhatsapp:
-      asString(payload.whatsappResponsavel) ||
-      asString(payload.whatsapp) ||
-      solicitacaoAtual.contatoWhatsapp,
-  };
-}
-
-async function persistirSolicitacaoPublica(
-  solicitacaoAtual: PublicSubmissionDetail,
-  status: StatusEditorial,
-  values?: FormValues
-) {
-  const supabase = createServerSupabaseClient();
-  const payload = mesclarPayloadSolicitacao(solicitacaoAtual.payload, values);
-  const resumo = montarResumoSolicitacao(payload, solicitacaoAtual);
-  const { data, error } = await supabase
-    .from("solicitacoes_publicas")
-    .update({
-      titulo: resumo.titulo,
-      responsavel: resumo.responsavel,
-      contato_email: resumo.contatoEmail,
-      contato_whatsapp: resumo.contatoWhatsapp,
-      status,
-      payload,
-    })
-    .eq("id", solicitacaoAtual.id)
-    .select("*")
-    .single();
-
-  if (error) {
-    throw new Error(error.message);
-  }
-
-  return mapSolicitacaoRow(data as SolicitacaoPublicaDbRow);
-}
-
-export async function salvarSolicitacaoPublica(
+async function verificarSlugExistente(
   tipo: CadastroTipoId,
-  values: FormValues
-): Promise<ResultadoSolicitacaoPublica> {
+  slug: string,
+  idIgnorado?: string
+): Promise<string | undefined> {
   const supabase = createServerSupabaseClient();
+  const tabela = TABELA_POR_TIPO[tipo];
 
-  const { data, error } = await supabase
-    .from("solicitacoes_publicas")
-    .insert({
-      tipo,
-      titulo: asString(values.titulo),
-      responsavel: asString(values.nomeContato),
-      contato_email: asString(values.emailResponsavel),
-      contato_whatsapp: asString(values.whatsappResponsavel) || asString(values.whatsapp),
-      status: "pendente_aprovacao",
-      payload: serializarPayloadSolicitacaoPublica(values),
-    })
-    .select("id")
-    .single();
+  let query = supabase.from(tabela).select("slug").eq("slug", slug);
+
+  if (idIgnorado) {
+    query = query.neq("id", idIgnorado);
+  }
+
+  const { data, error } = await query.maybeSingle();
 
   if (error) {
     throw new Error(error.message);
   }
 
-  return {
-    id: String(data.id),
-  };
+  return data?.slug ?? undefined;
 }
 
-export async function contarSolicitacoesPendentes() {
+async function listarRegistrosSolicitacaoPorTipo(
+  tipo: CadastroTipoId,
+  status?: StatusEditorial
+) {
   const supabase = createServerSupabaseClient();
-  const { count, error } = await supabase
-    .from("solicitacoes_publicas")
-    .select("id", { count: "exact", head: true })
-    .eq("status", "pendente_aprovacao");
-
-  if (error) {
-    throw new Error(error.message);
-  }
-
-  return count ?? 0;
-}
-
-export async function listarSolicitacoesPublicas(status?: StatusEditorial) {
-  const supabase = createServerSupabaseClient();
-  let query = supabase
-    .from("solicitacoes_publicas")
-    .select("*")
-    .order("criado_em", { ascending: false });
+  const tabela = TABELA_POR_TIPO[tipo];
+  let query = supabase.from(tabela).select("*");
 
   if (status) {
     query = query.eq("status", status);
+  } else {
+    query = query.in("status", STATUSS_DA_FILA);
   }
 
   const { data, error } = await query;
@@ -262,27 +531,14 @@ export async function listarSolicitacoesPublicas(status?: StatusEditorial) {
     throw new Error(error.message);
   }
 
-  return (data ?? []).map((row) => mapSolicitacaoRow(row as SolicitacaoPublicaDbRow));
+  return (data ?? []) as RegistroPublicacaoRow[];
 }
 
-export async function listarSolicitacoesPendentes(): Promise<PublicSubmission[]> {
-  const itens = await listarSolicitacoesPublicas("pendente_aprovacao");
-
-  return itens.map((item) => ({
-    id: item.id,
-    tipo: item.tipo,
-    titulo: item.titulo,
-    responsavel: item.responsavel,
-    contatoEmail: item.contatoEmail,
-    status: item.status,
-    criadoEm: item.criadoEm,
-  }));
-}
-
-export async function obterSolicitacaoPublica(id: string) {
+async function buscarRegistroSolicitacao(tipo: CadastroTipoId, id: string) {
   const supabase = createServerSupabaseClient();
+  const tabela = TABELA_POR_TIPO[tipo];
   const { data, error } = await supabase
-    .from("solicitacoes_publicas")
+    .from(tabela)
     .select("*")
     .eq("id", id)
     .maybeSingle();
@@ -291,11 +547,149 @@ export async function obterSolicitacaoPublica(id: string) {
     throw new Error(error.message);
   }
 
-  if (!data) {
+  return (data as RegistroPublicacaoRow | null) ?? null;
+}
+
+function mapResumoSolicitacao(
+  tipo: CadastroTipoId,
+  row: RegistroPublicacaoRow
+): PublicSubmission {
+  const id = asId(row.id);
+
+  return {
+    id: criarIdentificadorSolicitacao(tipo, id),
+    tipo,
+    titulo: asString(row.titulo) || asString(row.slug),
+    responsavel: "",
+    contatoEmail: "",
+    status: asStatusEditorial(row.status),
+    criadoEm: obterCriadoEm(row),
+  };
+}
+
+function compararSolicitacoesDesc(a: PublicSubmission, b: PublicSubmission) {
+  const dataA = Date.parse(a.criadoEm);
+  const dataB = Date.parse(b.criadoEm);
+
+  if (Number.isNaN(dataA) && Number.isNaN(dataB)) {
+    return a.titulo.localeCompare(b.titulo, "pt-BR");
+  }
+
+  if (Number.isNaN(dataA)) {
+    return 1;
+  }
+
+  if (Number.isNaN(dataB)) {
+    return -1;
+  }
+
+  return dataB - dataA;
+}
+
+export async function salvarSolicitacaoPublica(
+  tipo: CadastroTipoId,
+  values: FormValues
+): Promise<ResultadoSolicitacaoPublica> {
+  validarCamposSolicitacao(tipo, values);
+
+  const resultado = await salvarRegistroDashboard(
+    tipo,
+    {
+      ...values,
+      publicado: false,
+    },
+    undefined,
+    {
+      statusFallback: "pendente_aprovacao",
+    }
+  );
+
+  return {
+    id: criarIdentificadorSolicitacao(tipo, resultado.id),
+  };
+}
+
+export async function contarSolicitacoesPendentes() {
+  const supabase = createServerSupabaseClient();
+
+  const contagens = await Promise.all(
+    TIPOS_CADASTRO_PUBLICO.map(async (tipo) => {
+      const { count, error } = await supabase
+        .from(TABELA_POR_TIPO[tipo])
+        .select("id", { count: "exact", head: true })
+        .eq("status", "pendente_aprovacao");
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      return count ?? 0;
+    })
+  );
+
+  return contagens.reduce((total, count) => total + count, 0);
+}
+
+export async function listarSolicitacoesPublicas(status?: StatusEditorial) {
+  const registros = await Promise.all(
+    TIPOS_CADASTRO_PUBLICO.map(async (tipo) => {
+      const itens = await listarRegistrosSolicitacaoPorTipo(tipo, status);
+      return itens
+        .map((row) => mapResumoSolicitacao(tipo, row))
+        .filter((row) => row.id.length > 0);
+    })
+  );
+
+  return registros.flat().sort(compararSolicitacoesDesc);
+}
+
+export async function listarSolicitacoesPendentes(): Promise<PublicSubmission[]> {
+  return listarSolicitacoesPublicas("pendente_aprovacao");
+}
+
+export async function obterSolicitacaoPublica(identificador: string) {
+  const { tipo, id } = lerIdentificadorSolicitacao(identificador);
+  const row = await buscarRegistroSolicitacao(tipo, id);
+
+  if (!row) {
     return null;
   }
 
-  return mapSolicitacaoRow(data as SolicitacaoPublicaDbRow);
+  const payload = montarPayloadCadastro(tipo, row);
+  const status = asStatusEditorial(row.status);
+  const slugPublicacao = status === "publicado" ? asString(row.slug) : "";
+
+  if (slugPublicacao) {
+    payload.slugPublicacao = slugPublicacao;
+  }
+
+  return {
+    id: identificador,
+    tipo,
+    titulo: asString(row.titulo) || asString(payload.titulo),
+    responsavel: "",
+    contatoEmail: "",
+    contatoWhatsapp: obterContatoWhatsapp(row),
+    status,
+    criadoEm: obterCriadoEm(row),
+    atualizadoEm: obterAtualizadoEm(row),
+    payload,
+  } satisfies PublicSubmissionDetail;
+}
+
+function construirValoresPersistencia(
+  tipo: CadastroTipoId,
+  row: RegistroPublicacaoRow,
+  values?: FormValues
+) {
+  const valoresBase = montarPayloadCadastro(tipo, row);
+
+  return values
+    ? {
+        ...valoresBase,
+        ...values,
+      }
+    : valoresBase;
 }
 
 export async function executarAcaoSolicitacaoPublica({
@@ -307,67 +701,78 @@ export async function executarAcaoSolicitacaoPublica({
   action: PublicSubmissionAction;
   values?: FormValues;
 }): Promise<ResultadoAcaoSolicitacaoPublica> {
-  const solicitacao = await obterSolicitacaoPublica(id);
+  const { tipo, id: registroId } = lerIdentificadorSolicitacao(id);
+  const registro = await buscarRegistroSolicitacao(tipo, registroId);
 
-  if (!solicitacao) {
-    throw new Error("Solicitação pública não encontrada.");
+  if (!registro) {
+    throw new Error("Cadastro pendente não encontrado.");
   }
 
+  const statusAtual = asStatusEditorial(registro.status);
   const valoresFormatados = values
     ? aplicarFormatacoesCadastro({ ...values })
     : undefined;
 
   if (valoresFormatados) {
-    validarCamposSolicitacao(solicitacao.tipo, valoresFormatados);
+    validarCamposSolicitacao(tipo, valoresFormatados);
   }
 
+  const valoresPersistencia = construirValoresPersistencia(tipo, registro, valoresFormatados);
+  const slugAtual = asString(registro.slug);
+
   if (action === "salvar") {
-    const atualizado = await persistirSolicitacaoPublica(
-      solicitacao,
-      solicitacao.status,
-      valoresFormatados
+    const atualizado = await salvarRegistroDashboard(
+      tipo,
+      {
+        ...valoresPersistencia,
+        publicado: statusAtual === "publicado",
+      },
+      slugAtual,
+      {
+        idAtual: registroId,
+        statusFallback: statusAtual,
+      }
     );
 
     return {
-      id: atualizado.id,
-      tipo: atualizado.tipo,
-      status: atualizado.status,
-      slugPublicacao: asString(atualizado.payload.slugPublicacao),
+      id,
+      tipo,
+      status: statusAtual,
+      slugPublicacao:
+        statusAtual === "publicado"
+          ? atualizado.slug ?? asString(valoresPersistencia.slug)
+          : undefined,
     };
   }
 
   if (action === "aprovar") {
-    if (solicitacao.status === "publicado") {
-      throw new Error("Esta solicitação já foi publicada.");
+    const slugCandidata = asString(valoresPersistencia.slug);
+    const slugExistente = slugCandidata
+      ? await verificarSlugExistente(tipo, slugCandidata, registroId)
+      : undefined;
+
+    if (slugExistente) {
+      throw new Error("Já existe um cadastro com este slug.");
     }
 
-    const payloadPublicacao = mesclarPayloadSolicitacao(
-      solicitacao.payload,
-      valoresFormatados
-    );
-    const slugCandidata = asString(payloadPublicacao.slug);
-    const slugExistente = slugCandidata
-      ? await verificarSlugExistente(solicitacao.tipo, slugCandidata)
-      : undefined;
-    const resultado = await salvarRegistroDashboard(
-      solicitacao.tipo,
+    const atualizado = await salvarRegistroDashboard(
+      tipo,
       {
-        ...payloadPublicacao,
+        ...valoresPersistencia,
         publicado: true,
       },
-      slugExistente
+      slugAtual,
+      {
+        idAtual: registroId,
+        statusFallback: "pendente_aprovacao",
+      }
     );
-    const slugPublicacao = resultado.slug ?? asString(payloadPublicacao.slug);
-    const atualizado = await persistirSolicitacaoPublica(solicitacao, "publicado", {
-      ...payloadPublicacao,
-      slugPublicacao,
-    });
 
     return {
-      id: atualizado.id,
-      tipo: atualizado.tipo,
-      status: atualizado.status,
-      slugPublicacao,
+      id,
+      tipo,
+      status: "publicado",
+      slugPublicacao: atualizado.slug ?? slugCandidata,
     };
   }
 
@@ -380,16 +785,27 @@ export async function executarAcaoSolicitacaoPublica({
     arquivar: "arquivado",
   };
 
-  const atualizado = await persistirSolicitacaoPublica(
-    solicitacao,
-    statusPorAcao[action],
-    valoresFormatados
+  const proximoStatus = statusPorAcao[action];
+  const atualizado = await salvarRegistroDashboard(
+    tipo,
+    {
+      ...valoresPersistencia,
+      publicado: false,
+    },
+    slugAtual,
+    {
+      idAtual: registroId,
+      statusFallback: proximoStatus,
+    }
   );
 
   return {
-    id: atualizado.id,
-    tipo: atualizado.tipo,
-    status: atualizado.status,
-    slugPublicacao: asString(atualizado.payload.slugPublicacao),
+    id,
+    tipo,
+    status: proximoStatus,
+    slugPublicacao:
+      proximoStatus === "publicado"
+        ? atualizado.slug ?? asString(valoresPersistencia.slug)
+        : undefined,
   };
 }

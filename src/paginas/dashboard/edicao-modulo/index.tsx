@@ -13,6 +13,15 @@ import {
 } from "@/servicos/dashboard";
 import { DashboardModuloId, FormValues } from "@/tipos/plataforma";
 
+const MODULOS_COM_CONFIRMACAO_EDICAO_PUBLICADA = new Set<DashboardModuloId>([
+  "blog",
+  "pacotes",
+  "eventos",
+  "hoteis",
+  "negocios",
+  "restaurantes",
+]);
+
 type EdicaoModuloPaginaProps = {
   modulo: DashboardModuloId;
   slug?: string;
@@ -46,6 +55,10 @@ export default async function EdicaoModuloPagina({
   const linha = slug
     ? linhas.find((item: { id: string }) => item.id === slug)
     : undefined;
+  const requerConfirmacaoEdicaoPublicada =
+    Boolean(slug) &&
+    linha?.status === "publicado" &&
+    MODULOS_COM_CONFIRMACAO_EDICAO_PUBLICADA.has(modulo);
   const imagem =
     Array.isArray(valoresFormulario.capa) && valoresFormulario.capa[0] && typeof valoresFormulario.capa[0] === "object" && "src" in valoresFormulario.capa[0]
       ? (valoresFormulario.capa[0] as { src: string }).src
@@ -98,8 +111,19 @@ export default async function EdicaoModuloPagina({
                   value:
                     modulo === "contatos"
                       ? "Consulta administrativa"
+                      : requerConfirmacaoEdicaoPublicada
+                        ? "Conteúdo ao vivo no portal"
                       : "Pronto para aprovação, revisão ou publicação",
                 },
+                ...(requerConfirmacaoEdicaoPublicada
+                  ? [
+                      {
+                        label: "Atenção ao salvar",
+                        value:
+                          "Este conteúdo já está publicado. Depois da confirmação, qualquer alteração salva passa a valer imediatamente no portal.",
+                      },
+                    ]
+                  : []),
               ]}
             />
 
@@ -141,6 +165,7 @@ export default async function EdicaoModuloPagina({
           currentUsername={
             typeof valores.username === "string" ? valores.username : undefined
           }
+          requiresPublishedEditConfirmation={requerConfirmacaoEdicaoPublicada}
         />
       </LayoutEdicao>
     </ContainerConteudo>

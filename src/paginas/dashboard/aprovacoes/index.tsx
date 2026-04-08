@@ -2,6 +2,7 @@ import CabecalhoSecao from "@/componentes/dashboard/cabecalho-secao";
 import ContainerConteudo from "@/componentes/dashboard/container-conteudo";
 import EstadoVazio from "@/componentes/dashboard/estado-vazio";
 import ListaModuloInterativa from "@/componentes/dashboard/lista-modulo-interativa";
+import { obterRotuloTipoCadastro } from "@/servicos/cadastros";
 import { listarSolicitacoesPublicas } from "@/servicos/solicitacoes-publicas";
 import { AdminTableAction } from "@/tipos/plataforma";
 
@@ -44,8 +45,7 @@ export default async function AprovacoesDashboardPagina() {
   const rows = solicitacoes.map((item) => ({
     id: item.id,
     titulo: item.titulo,
-    categoria: item.tipo,
-    responsavel: item.responsavel,
+    categoria: obterRotuloTipoCadastro(item.tipo),
     status: item.status,
     atualizado: item.criadoEm,
     href: `/dashboard/aprovacoes/${item.id}`,
@@ -56,27 +56,26 @@ export default async function AprovacoesDashboardPagina() {
     <ContainerConteudo>
       <CabecalhoSecao
         eyebrow="Aprovação"
-        titulo="Fila de aprovação"
-        descricao="Revise as solicitações públicas enviadas ao portal, salve ajustes quando necessário e publique somente o que estiver aprovado."
+        titulo="Fila editorial"
+        descricao="Revise os cadastros pendentes gravados nas tabelas finais, salve ajustes quando necessário e publique somente o que estiver aprovado."
       />
 
       {rows.length === 0 ? (
         <EstadoVazio
-          titulo="Nenhuma solicitação recebida"
-          descricao="Quando novos cadastros públicos forem enviados, eles aparecerão aqui para revisão administrativa."
+          titulo="Nenhum cadastro em análise"
+          descricao="Quando novos cadastros entrarem com status pendente, eles aparecerão aqui para revisão administrativa."
         />
       ) : (
         <ListaModuloInterativa
           columns={[
-            { key: "titulo", label: "Solicitação" },
+            { key: "titulo", label: "Cadastro" },
             { key: "categoria", label: "Tipo" },
-            { key: "responsavel", label: "Responsável" },
             { key: "status", label: "Status" },
-            { key: "atualizado", label: "Recebido em" },
+            { key: "atualizado", label: "Criado em" },
           ]}
           rows={rows}
-          emptyTitle="Nenhuma solicitação encontrada"
-          emptyDescription="Ajuste a busca ou o filtro de status para localizar outra solicitação."
+          emptyTitle="Nenhum cadastro encontrado"
+          emptyDescription="Ajuste a busca ou o filtro de status para localizar outro cadastro."
         />
       )}
     </ContainerConteudo>

@@ -22,8 +22,22 @@ export type RestauranteAdminRow = {
   atualizado_em?: string | null;
 };
 
+function sanitizarArrayStrings(valor: unknown): string[] {
+  if (!Array.isArray(valor)) {
+    return [];
+  }
+
+  return valor.filter(
+    (item): item is string => typeof item === "string" && item.trim().length > 0
+  );
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function mapRow(row: any): Restaurante {
+  const sobre = sanitizarArrayStrings(row.sobre);
+  const especialidades = sanitizarArrayStrings(row.especialidades);
+  const diferenciais = sanitizarArrayStrings(row.diferenciais);
+
   return {
     slug: row.slug,
     categoria: row.categoria,
@@ -36,10 +50,10 @@ function mapRow(row: any): Restaurante {
     endereco: row.endereco,
     funcionamento: row.funcionamento,
     contato: row.contato,
-    sobre: row.sobre ?? [],
-    especialidades: row.especialidades ?? [],
-    diferenciais: row.diferenciais ?? [],
-    destaqueListagem: row.destaque_listagem || row.especialidades?.[0] || row.categoria,
+    sobre,
+    especialidades,
+    diferenciais,
+    destaqueListagem: row.destaque_listagem || especialidades[0] || row.categoria,
   };
 }
 

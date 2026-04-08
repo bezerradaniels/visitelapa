@@ -1,6 +1,11 @@
 import { PostgrestError } from "@supabase/supabase-js";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
-import { DashboardModuloId, FormValues, ImageFieldValue } from "@/tipos/plataforma";
+import {
+  DashboardModuloId,
+  FormValues,
+  ImageFieldValue,
+  StatusEditorial,
+} from "@/tipos/plataforma";
 import {
   calcularTempoLeituraBlog,
   htmlParaParagrafosBlog,
@@ -12,6 +17,12 @@ import { moduloEhTipoCadastro } from "./cadastros";
 type ResultadoPersistenciaDashboard = {
   id: string;
   slug?: string;
+};
+
+type PersistenciaDashboardOptions = {
+  slugAtual?: string;
+  idAtual?: string;
+  statusFallback?: StatusEditorial;
 };
 
 function asString(value: FormValues[string]) {
@@ -35,14 +46,14 @@ function asNumber(value: FormValues[string]) {
   return null;
 }
 
-function splitLines(value: FormValues[string]) {
-  return asString(value)
-    .split(/\n+/)
-    .map((item) => item.trim())
-    .filter(Boolean);
-}
-
 function splitCommaSeparated(value: FormValues[string]) {
+  if (Array.isArray(value)) {
+    return value
+      .filter((item): item is string => typeof item === "string")
+      .map((item) => item.trim())
+      .filter(Boolean);
+  }
+
   return asString(value)
     .split(",")
     .map((item) => item.trim())
@@ -87,7 +98,10 @@ function parseMoeda(value: FormValues[string]) {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
-function obterStatusPublicacao(values: FormValues, fallback = "rascunho") {
+function obterStatusPublicacao(
+  values: FormValues,
+  fallback: StatusEditorial = "rascunho"
+) {
   return asBoolean(values.publicado) ? "publicado" : fallback;
 }
 
@@ -114,12 +128,31 @@ async function resolverPublicadoEmBlog(values: FormValues, slugAtual?: string) {
   return asBoolean(values.publicado) ? new Date().toISOString() : null;
 }
 
-async function salvarPorSlug(
+async function salvarRegistro(
   tabela: string,
   payload: Record<string, unknown>,
-  slugAtual?: string
+  options: Pick<PersistenciaDashboardOptions, "idAtual" | "slugAtual"> = {}
 ): Promise<ResultadoPersistenciaDashboard> {
   const supabase = createServerSupabaseClient();
+  const { idAtual, slugAtual } = options;
+
+  if (idAtual) {
+    const { data, error } = await supabase
+      .from(tabela)
+      .update(payload)
+      .eq("id", idAtual)
+      .select("id, slug")
+      .single();
+
+    if (error) {
+      throw error;
+    }
+
+    return {
+      id: String(data.id ?? data.slug),
+      slug: typeof data.slug === "string" ? data.slug : undefined,
+    };
+  }
 
   if (slugAtual) {
     const { data, error } = await supabase
@@ -263,12 +296,19 @@ async function obterEstadoBahiaId() {
 export async function salvarRegistroDashboard(
   modulo: DashboardModuloId,
   values: FormValues,
-  slugAtual?: string
+  slugAtual?: string,
+  options: PersistenciaDashboardOptions = {}
 ): Promise<ResultadoPersistenciaDashboard> {
   try {
+    const persistencia = {
+      slugAtual,
+      idAtual: options.idAtual,
+    };
+    const statusFallback = options.statusFallback ?? "rascunho";
+
     switch (modulo) {
       case "pacotes":
-        return await salvarPorSlug(
+        return await salvarRegistro(
           "pacotes",
           {
             slug: asString(values.slug),
@@ -289,12 +329,12 @@ export async function salvarRegistroDashboard(
             parcelas: asNumber(values.parcelas),
             comodidades: splitCommaSeparated(values.comodidades),
             valor_final_parcelado: parseMoeda(values.valorFinalParcelado),
-            status: obterStatusPublicacao(values),
+            status: obterStatusPublicacao(values, statusFallback),
           },
-          slugAtual
+          persistencia
         );
       case "eventos":
-        return await salvarPorSlug(
+        return await salvarRegistro(
           "eventos",
           {
             slug: asString(values.slug),
@@ -313,15 +353,15 @@ export async function salvarRegistroDashboard(
             destaque_listagem: "",
             valor_ingresso: parseMoeda(values.valorIngresso),
             gratuito: asBoolean(values.eventoGratuito),
-            status: obterStatusPublicacao(values),
+            status: obterStatusPublicacao(values, statusFallback),
           },
-          slugAtual
+          persistencia
         );
       case "hoteis": {
         const comodidades = splitCommaSeparated(values.comodidades);
         const diferenciais = splitCommaSeparated(values.diferenciais);
 
-        return await salvarPorSlug(
+        return await salvarRegistro(
           "hoteis",
           {
             slug: asString(values.slug),
@@ -339,14 +379,16 @@ export async function salvarRegistroDashboard(
             diferenciais,
             destaque_listagem:
               diferenciais[0] ?? comodidades[0] ?? asString(values.categoria),
-            status: obterStatusPublicacao(values),
+            status: obterStatusPublicacao(values, statusFallback),
           },
-          slugAtual
+          persistencia
         );
       }
       case "negocios": {
         const logoUrl = extrairPrimeiraImagem(values.logo);
         const capaUrl = extrairPrimeiraImagem(values.capa) || logoUrl;
+        const especialidades = splitCommaSeparated(values.especialidades);
+        const diferenciais = splitCommaSeparated(values.diferenciais);
         const payloadNegocios: Record<string, unknown> = {
           slug: asString(values.slug),
           username: asString(values.username).toLowerCase(),
@@ -359,16 +401,16 @@ export async function salvarRegistroDashboard(
           endereco: montarEndereco(values),
           atendimento: "",
           contato: asString(values.whatsappResponsavel),
-          especialidades: Array.isArray(values.especialidades) ? values.especialidades.filter(Boolean) : [],
-          diferenciais: Array.isArray(values.diferenciais) ? values.diferenciais.filter(Boolean) : [],
+          especialidades,
+          diferenciais,
           destaque_listagem: asString(values.subcategoria),
-          status: obterStatusPublicacao(values),
+          status: obterStatusPublicacao(values, statusFallback),
         };
         // Só atualiza logo se o usuário enviou uma imagem
         if (logoUrl) {
           payloadNegocios.logo = logoUrl;
         }
-        return await salvarPorSlug("negocios", payloadNegocios, slugAtual);
+        return await salvarRegistro("negocios", payloadNegocios, persistencia);
       }
       case "restaurantes": {
         const especialidades = splitCommaSeparated(values.especialidades);
@@ -389,16 +431,16 @@ export async function salvarRegistroDashboard(
           especialidades,
           diferenciais,
           destaque_listagem: especialidades[0] ?? asString(values.categoria),
-          status: obterStatusPublicacao(values),
+          status: obterStatusPublicacao(values, statusFallback),
           logo: logoUrl || null,
         };
 
-        return await salvarPorSlug("restaurantes", payloadRestaurante, slugAtual);
+        return await salvarRegistro("restaurantes", payloadRestaurante, persistencia);
       }
       case "blog": {
         const conteudoHtml = normalizarHtmlBlog(values.conteudo);
 
-        return await salvarPorSlug(
+        return await salvarRegistro(
           "blog_posts",
           {
             slug: asString(values.slug),
@@ -414,15 +456,15 @@ export async function salvarRegistroDashboard(
             conteudo_html: conteudoHtml,
             fechamento: "",
             destaque_listagem: "",
-            status: obterStatusPublicacao(values),
+            status: obterStatusPublicacao(values, statusFallback),
           },
-          slugAtual
+          persistencia
         );
       }
       case "categorias":
         return await salvarCategoriaCadastro(values, slugAtual);
       case "cidades":
-        return await salvarPorSlug(
+        return await salvarRegistro(
           "cidades",
           {
             nome: asString(values.titulo),
@@ -432,10 +474,10 @@ export async function salvarRegistroDashboard(
             ordem: 1,
             status: "publicado",
           },
-          slugAtual
+          persistencia
         );
       case "bairros":
-        return await salvarPorSlug(
+        return await salvarRegistro(
           "bairros",
           {
             nome: asString(values.titulo),
@@ -445,7 +487,7 @@ export async function salvarRegistroDashboard(
             ordem: asNumber(values.ordem) ?? 999,
             status: "publicado",
           },
-          slugAtual
+          persistencia
         );
       case "contatos":
         if (!slugAtual) {

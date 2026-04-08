@@ -37,26 +37,26 @@ export default async function DashboardPagina() {
         <div className="space-y-8">
           <div>
             <h2 className="text-2xl font-semibold text-slate-950">
-              Solicitações públicas em andamento
+              Cadastros aguardando aprovação
             </h2>
             <p className="mt-2 text-sm leading-7 text-slate-600">
-              Toda publicação enviada pelos formulários públicos passa primeiro
-              por esta fila de análise administrativa.
+              Todo cadastro enviado pelo portal entra direto na tabela final com
+              status pendente e passa primeiro por esta fila de análise administrativa.
             </p>
           </div>
 
           {solicitacoes.length === 0 ? (
             <EstadoVazio
-              titulo="Nenhuma solicitação pendente"
-              descricao="Quando novos cadastros públicos forem enviados, eles aparecerão aqui para revisão administrativa."
+              titulo="Nenhum cadastro pendente"
+              descricao="Quando novos cadastros forem enviados, eles aparecerão aqui para revisão administrativa."
             />
           ) : (
             <TabelaAdmin
               columns={[
-                { key: "titulo", label: "Solicitação" },
+                { key: "titulo", label: "Cadastro" },
                 { key: "categoria", label: "Tipo" },
                 { key: "status", label: "Status" },
-                { key: "atualizado", label: "Recebido em" },
+                { key: "atualizado", label: "Criado em" },
               ]}
               rows={solicitacoes}
             />

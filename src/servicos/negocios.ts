@@ -31,6 +31,10 @@ function sanitizarArrayStrings(valor: unknown): string[] {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function mapRow(row: any): Negocio {
+  const sobre = sanitizarArrayStrings(row.sobre);
+  const especialidades = sanitizarArrayStrings(row.especialidades);
+  const diferenciais = sanitizarArrayStrings(row.diferenciais);
+
   return {
     slug: row.slug,
     username: row.username ?? "",
@@ -44,10 +48,10 @@ function mapRow(row: any): Negocio {
     endereco: row.endereco,
     atendimento: row.atendimento,
     contato: row.contato,
-    sobre: sanitizarArrayStrings(row.sobre),
-    especialidades: sanitizarArrayStrings(row.especialidades),
-    diferenciais: sanitizarArrayStrings(row.diferenciais),
-    destaqueListagem: row.destaque_listagem,
+    sobre,
+    especialidades,
+    diferenciais,
+    destaqueListagem: row.destaque_listagem || diferenciais[0] || especialidades[0] || row.categoria,
   };
 }
 
