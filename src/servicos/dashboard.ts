@@ -469,6 +469,19 @@ export async function listarLinhasModulo(modulo: DashboardModuloId) {
           status: row.status ?? "rascunho",
           atualizado: obterAtualizacaoRegistro(row, row.data_ida ?? ""),
           href: `/dashboard/pacotes/${row.slug}`,
+          actions: [
+            { type: "edit" as const, href: `/dashboard/pacotes/${row.slug}` },
+            {
+              type: "pause" as const,
+              actionPath: `/api/dashboard/pacotes/${row.slug}`,
+              confirmMessage: "Pausar este pacote? Ele ficará arquivado e fora do portal.",
+            },
+            {
+              type: "delete" as const,
+              actionPath: `/api/dashboard/pacotes/${row.slug}`,
+              confirmMessage: "Excluir permanentemente? Esta ação não pode ser desfeita.",
+            },
+          ],
         }));
       } catch {
         return pacotesDashboard.map((item) => ({
@@ -489,6 +502,20 @@ export async function listarLinhasModulo(modulo: DashboardModuloId) {
         status: item.status ?? "rascunho",
         atualizado: obterAtualizacaoRegistro(item, item.data_inicio ?? ""),
         href: `/dashboard/eventos/${item.slug}`,
+        actions: [
+          { type: "view" as const, href: `/eventos/${item.slug}` },
+          { type: "edit" as const, href: `/dashboard/eventos/${item.slug}` },
+          {
+            type: "pause" as const,
+            actionPath: `/api/dashboard/eventos/${item.slug}`,
+            confirmMessage: "Pausar este evento? Ele ficará arquivado e fora do portal.",
+          },
+          {
+            type: "delete" as const,
+            actionPath: `/api/dashboard/eventos/${item.slug}`,
+            confirmMessage: "Excluir permanentemente? Esta ação não pode ser desfeita.",
+          },
+        ],
       }));
     }
     case "hoteis": {
@@ -500,6 +527,20 @@ export async function listarLinhasModulo(modulo: DashboardModuloId) {
         status: item.status ?? "rascunho",
         atualizado: obterAtualizacaoRegistro(item, item.check_in ?? ""),
         href: `/dashboard/hoteis/${item.slug}`,
+        actions: [
+          { type: "view" as const, href: `/hoteis/${item.slug}` },
+          { type: "edit" as const, href: `/dashboard/hoteis/${item.slug}` },
+          {
+            type: "pause" as const,
+            actionPath: `/api/dashboard/hoteis/${item.slug}`,
+            confirmMessage: "Pausar este hotel? Ele ficará arquivado e fora do portal.",
+          },
+          {
+            type: "delete" as const,
+            actionPath: `/api/dashboard/hoteis/${item.slug}`,
+            confirmMessage: "Excluir permanentemente? Esta ação não pode ser desfeita.",
+          },
+        ],
       }));
     }
     case "negocios": {
@@ -511,6 +552,20 @@ export async function listarLinhasModulo(modulo: DashboardModuloId) {
         status: item.status ?? "rascunho",
         atualizado: obterAtualizacaoRegistro(item, item.atendimento ?? ""),
         href: `/dashboard/negocios/${item.slug}`,
+        actions: [
+          { type: "view" as const, href: `/negocios/${item.slug}` },
+          { type: "edit" as const, href: `/dashboard/negocios/${item.slug}` },
+          {
+            type: "pause" as const,
+            actionPath: `/api/dashboard/negocios/${item.slug}`,
+            confirmMessage: "Pausar este negócio? Ele ficará arquivado e fora do portal.",
+          },
+          {
+            type: "delete" as const,
+            actionPath: `/api/dashboard/negocios/${item.slug}`,
+            confirmMessage: "Excluir permanentemente? Esta ação não pode ser desfeita.",
+          },
+        ],
       }));
     }
     case "restaurantes": {
@@ -522,6 +577,20 @@ export async function listarLinhasModulo(modulo: DashboardModuloId) {
         status: item.status ?? "rascunho",
         atualizado: obterAtualizacaoRegistro(item, item.funcionamento ?? ""),
         href: `/dashboard/restaurantes/${item.slug}`,
+        actions: [
+          { type: "view" as const, href: `/restaurantes/${item.slug}` },
+          { type: "edit" as const, href: `/dashboard/restaurantes/${item.slug}` },
+          {
+            type: "pause" as const,
+            actionPath: `/api/dashboard/restaurantes/${item.slug}`,
+            confirmMessage: "Pausar este restaurante? Ele ficará arquivado e fora do portal.",
+          },
+          {
+            type: "delete" as const,
+            actionPath: `/api/dashboard/restaurantes/${item.slug}`,
+            confirmMessage: "Excluir permanentemente? Esta ação não pode ser desfeita.",
+          },
+        ],
       }));
     }
     case "blog": {
@@ -533,6 +602,20 @@ export async function listarLinhasModulo(modulo: DashboardModuloId) {
         status: item.status,
         atualizado: item.publicadoEm || "Sem publicação",
         href: `/dashboard/blog/${item.slug}`,
+        actions: [
+          { type: "view" as const, href: `/blog/${item.slug}` },
+          { type: "edit" as const, href: `/dashboard/blog/${item.slug}` },
+          {
+            type: "pause" as const,
+            actionPath: `/api/dashboard/blog/${item.slug}`,
+            confirmMessage: "Pausar este post? Ele ficará arquivado e fora do portal.",
+          },
+          {
+            type: "delete" as const,
+            actionPath: `/api/dashboard/blog/${item.slug}`,
+            confirmMessage: "Excluir permanentemente? Esta ação não pode ser desfeita.",
+          },
+        ],
       }));
     }
     case "categorias":

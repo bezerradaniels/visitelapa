@@ -510,3 +510,46 @@ export async function salvarRegistroDashboard(
     throw new Error("Não foi possível salvar o registro no Supabase.");
   }
 }
+
+const TABELA_POR_MODULO: Partial<Record<DashboardModuloId, string>> = {
+  pacotes: "pacotes",
+  eventos: "eventos",
+  hoteis: "hoteis",
+  negocios: "negocios",
+  restaurantes: "restaurantes",
+  blog: "blog_posts",
+};
+
+export async function pausarRegistroDashboard(modulo: DashboardModuloId, slug: string) {
+  const tabela = TABELA_POR_MODULO[modulo];
+  if (!tabela) {
+    throw new Error("Módulo não suporta esta operação.");
+  }
+
+  const supabase = createServerSupabaseClient();
+  const { error } = await supabase
+    .from(tabela)
+    .update({ status: "arquivado" })
+    .eq("slug", slug);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+}
+
+export async function excluirRegistroDashboard(modulo: DashboardModuloId, slug: string) {
+  const tabela = TABELA_POR_MODULO[modulo];
+  if (!tabela) {
+    throw new Error("Módulo não suporta esta operação.");
+  }
+
+  const supabase = createServerSupabaseClient();
+  const { error } = await supabase
+    .from(tabela)
+    .delete()
+    .eq("slug", slug);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+}

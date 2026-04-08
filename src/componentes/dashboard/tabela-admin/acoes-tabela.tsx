@@ -6,8 +6,10 @@ import { useState } from "react";
 import {
   CancelCircleIcon,
   CheckmarkCircle01Icon,
+  Delete01Icon,
   Edit01Icon,
   EyeIcon,
+  PauseIcon,
 } from "@hugeicons/core-free-icons";
 import type { IconSvgElement } from "@hugeicons/react";
 import Icone from "@/componentes/ui/icone";
@@ -26,13 +28,13 @@ type ConfiguracaoAcao = {
 const CONFIGURACOES_ACAO: Record<AdminTableAction["type"], ConfiguracaoAcao> = {
   view: {
     icon: EyeIcon,
-    label: "Visualizar solicitação",
+    label: "Visualizar no portal",
     className:
       "border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-950",
   },
   edit: {
     icon: Edit01Icon,
-    label: "Editar solicitação",
+    label: "Editar",
     className:
       "border-sky-200 text-sky-700 hover:border-sky-300 hover:bg-sky-50 hover:text-sky-900",
   },
@@ -45,6 +47,18 @@ const CONFIGURACOES_ACAO: Record<AdminTableAction["type"], ConfiguracaoAcao> = {
   reject: {
     icon: CancelCircleIcon,
     label: "Reprovar solicitação",
+    className:
+      "border-rose-200 text-rose-700 hover:border-rose-300 hover:bg-rose-50 hover:text-rose-900",
+  },
+  pause: {
+    icon: PauseIcon,
+    label: "Pausar publicação",
+    className:
+      "border-amber-200 text-amber-700 hover:border-amber-300 hover:bg-amber-50 hover:text-amber-900",
+  },
+  delete: {
+    icon: Delete01Icon,
+    label: "Excluir permanentemente",
     className:
       "border-rose-200 text-rose-700 hover:border-rose-300 hover:bg-rose-50 hover:text-rose-900",
   },
@@ -69,15 +83,23 @@ export default function AcoesTabela({ actions }: AcoesTabelaProps) {
     setErro(null);
 
     try {
+      let method = "POST";
+      let body: string | undefined;
+
+      if (action.type === "delete") {
+        method = "DELETE";
+      } else if (action.type === "pause") {
+        method = "PATCH";
+        body = JSON.stringify({ action: "pausar" });
+      } else {
+        body = JSON.stringify({ action: ACAO_API[action.type as "approve" | "reject"] });
+      }
+
       const response = await fetch(action.actionPath, {
-        method: "POST",
+        method,
         credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          action: ACAO_API[action.type],
-        }),
+        headers: { "Content-Type": "application/json" },
+        body,
       });
       const data = await response.json();
 

@@ -511,6 +511,35 @@ async function verificarSlugExistente(
   return data?.slug ?? undefined;
 }
 
+function gerarSlugBase(texto: string): string {
+  return texto
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 80);
+}
+
+async function gerarSlugUnico(tipo: CadastroTipoId, titulo: string): Promise<string> {
+  const base = gerarSlugBase(titulo) || "sem-titulo";
+
+  const existente = await verificarSlugExistente(tipo, base);
+  if (!existente) {
+    return base;
+  }
+
+  for (let i = 2; i <= 99; i++) {
+    const candidato = `${base}-${i}`;
+    const encontrado = await verificarSlugExistente(tipo, candidato);
+    if (!encontrado) {
+      return candidato;
+    }
+  }
+
+  return `${base}-${Date.now()}`;
+}
+
 async function listarRegistrosSolicitacaoPorTipo(
   tipo: CadastroTipoId,
   status?: StatusEditorial
@@ -528,7 +557,7 @@ async function listarRegistrosSolicitacaoPorTipo(
   const { data, error } = await query;
 
   if (error) {
-    throw new Error(error.message);
+    return [];
   }
 
   return (data ?? []) as RegistroPublicacaoRow[];
@@ -544,7 +573,7 @@ async function buscarRegistroSolicitacao(tipo: CadastroTipoId, id: string) {
     .maybeSingle();
 
   if (error) {
-    throw new Error(error.message);
+    return null;
   }
 
   return (data as RegistroPublicacaoRow | null) ?? null;
@@ -592,17 +621,23 @@ export async function salvarSolicitacaoPublica(
 ): Promise<ResultadoSolicitacaoPublica> {
   validarCamposSolicitacao(tipo, values);
 
-  const resultado = await salvarRegistroDashboard(
-    tipo,
-    {
-      ...values,
-      publicado: false,
-    },
-    undefined,
-    {
-      statusFallback: "pendente_aprovacao",
-    }
-  );
+  const titulo = typeof values.titulo === "string" ? values.titulo : "";
+  const slug = asString(values.slug) || (await gerarSlugUnico(tipo, titulo));
+
+  const valoresComSlug: FormValues = {
+    ...values,
+    slug,
+    publicado: false,
+  };
+
+  // Para negocios, garante username derivado do slug quando ausente
+  if (tipo === "negocios" && !asString(values.username)) {
+    valoresComSlug.username = gerarSlugBase(titulo).slice(0, 20) || slug.slice(0, 20);
+  }
+
+  const resultado = await salvarRegistroDashboard(tipo, valoresComSlug, undefined, {
+    statusFallback: "pendente_aprovacao",
+  });
 
   return {
     id: criarIdentificadorSolicitacao(tipo, resultado.id),
@@ -620,7 +655,7 @@ export async function contarSolicitacoesPendentes() {
         .eq("status", "pendente_aprovacao");
 
       if (error) {
-        throw new Error(error.message);
+        return 0;
       }
 
       return count ?? 0;
@@ -747,9 +782,14 @@ export async function executarAcaoSolicitacaoPublica({
 
   if (action === "aprovar") {
     const slugCandidata = asString(valoresPersistencia.slug);
-    const slugExistente = slugCandidata
-      ? await verificarSlugExistente(tipo, slugCandidata, registroId)
-      : undefined;
+
+    if (!slugCandidata) {
+      throw new Error(
+        "Defina um slug antes de aprovar. Edite o registro e preencha o campo Slug."
+      );
+    }
+
+    const slugExistente = await verificarSlugExistente(tipo, slugCandidata, registroId);
 
     if (slugExistente) {
       throw new Error("Já existe um cadastro com este slug.");

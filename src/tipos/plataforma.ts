@@ -119,7 +119,7 @@ export type AdminTableAction =
       label?: string;
     }
   | {
-      type: "approve" | "reject";
+      type: "approve" | "reject" | "pause" | "delete";
       actionPath: string;
       label?: string;
       confirmMessage?: string;

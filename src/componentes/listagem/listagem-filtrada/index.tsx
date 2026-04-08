@@ -11,6 +11,7 @@ import Paginacao from "@/componentes/listagem/paginacao";
 
 type ItemListagem = {
   slug: string;
+  username?: string;
   categoria: string;
   titulo: string;
   descricao: string;
@@ -107,19 +108,32 @@ function ListagemFiltradaConteudo({
       ) : (
         <>
           <GradeCards>
-            {itensDaPagina.map((item) => (
-              variant === "negocios-play" ? (
-                <CardNegocioPlay
-                  key={item.slug}
-                  href={`${baseHref}/${item.slug}`}
-                  label={item.categoria}
-                  titulo={item.titulo}
-                  descricao={item.descricao}
-                  logo={item.logo}
-                />
-              ) : (
+            {itensDaPagina.map((item) => {
+              const key = item.slug || item.username || item.titulo;
+              if (variant === "negocios-play") {
+                const href = item.slug
+                  ? `${baseHref}/${item.slug}`
+                  : item.username
+                  ? `/${item.username}`
+                  : null;
+
+                if (!href) return null;
+
+                return (
+                  <CardNegocioPlay
+                    key={key}
+                    href={href}
+                    label={item.categoria}
+                    titulo={item.titulo}
+                    descricao={item.descricao}
+                    logo={item.logo}
+                  />
+                );
+              }
+
+              return (
                 <CardListagem
-                  key={item.slug}
+                  key={key}
                   href={`${baseHref}/${item.slug}`}
                   tag={item.categoria}
                   destaque={item.destaqueListagem}
@@ -127,8 +141,8 @@ function ListagemFiltradaConteudo({
                   descricao={item.descricao}
                   imagem={item.imagem}
                 />
-              )
-            ))}
+              );
+            })}
           </GradeCards>
           {totalPaginas > 1 && (
             <Paginacao
