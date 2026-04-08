@@ -718,11 +718,19 @@ function construirValoresPersistencia(
   values?: FormValues
 ) {
   const valoresBase = montarPayloadCadastro(tipo, row);
+  // Garante que o slug do registro salvo sempre está presente,
+  // pois campos sem field definition são removidos por criarValoresIniciais.
+  const slugDoRegistro = asString(row.slug);
+  if (slugDoRegistro && !asString(valoresBase.slug)) {
+    valoresBase.slug = slugDoRegistro;
+  }
 
   return values
     ? {
         ...valoresBase,
         ...values,
+        // Se o values enviado não contiver slug, usa o do registro.
+        slug: asString(values.slug) || slugDoRegistro || asString(valoresBase.slug),
       }
     : valoresBase;
 }
@@ -781,7 +789,7 @@ export async function executarAcaoSolicitacaoPublica({
   }
 
   if (action === "aprovar") {
-    const slugCandidata = asString(valoresPersistencia.slug);
+    const slugCandidata = asString(valoresPersistencia.slug) || slugAtual;
 
     if (!slugCandidata) {
       throw new Error(
