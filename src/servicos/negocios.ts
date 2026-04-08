@@ -3,6 +3,7 @@ import { supabase } from "@/lib/supabase";
 import { buscarRegistroAdminPorSlug, criarServico, listarRegistrosAdmin } from "./utils";
 
 export type NegocioAdminRow = {
+  id?: string;
   slug: string;
   username: string | null;
   categoria: string | null;

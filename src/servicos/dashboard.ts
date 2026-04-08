@@ -545,28 +545,53 @@ export async function listarLinhasModulo(modulo: DashboardModuloId) {
     }
     case "negocios": {
       const itens = await listarNegociosAdmin();
-      return itens.map((item) => ({
-        id: item.slug,
-        titulo: item.titulo ?? "",
-        categoria: item.categoria ?? "Negócio",
-        status: item.status ?? "rascunho",
-        atualizado: obterAtualizacaoRegistro(item, item.atendimento ?? ""),
-        href: `/dashboard/negocios/${item.slug}`,
-        actions: [
-          { type: "view" as const, href: `/negocios/${item.slug}` },
-          { type: "edit" as const, href: `/dashboard/negocios/${item.slug}` },
-          {
-            type: "pause" as const,
-            actionPath: `/api/dashboard/negocios/${item.slug}`,
-            confirmMessage: "Pausar este negócio? Ele ficará arquivado e fora do portal.",
-          },
-          {
-            type: "delete" as const,
-            actionPath: `/api/dashboard/negocios/${item.slug}`,
-            confirmMessage: "Excluir permanentemente? Esta ação não pode ser desfeita.",
-          },
-        ],
-      }));
+      return itens.map((item) => {
+        const slug = item.slug || "";
+        const username = item.username || "";
+        const uuid = item.id || "";
+
+        const viewHref = slug
+          ? `/negocios/${slug}`
+          : username
+          ? `/${username}`
+          : null;
+
+        const editHref = slug
+          ? `/dashboard/negocios/${slug}`
+          : uuid
+          ? `/dashboard/aprovacoes/negocios:${uuid}`
+          : null;
+
+        const actionSlug = slug || uuid;
+
+        return {
+          id: slug || uuid,
+          titulo: item.titulo ?? "",
+          categoria: item.categoria ?? "Negócio",
+          status: item.status ?? "rascunho",
+          atualizado: obterAtualizacaoRegistro(item, item.atendimento ?? ""),
+          href: editHref ?? `/dashboard/negocios`,
+          actions: [
+            ...(viewHref ? [{ type: "view" as const, href: viewHref }] : []),
+            ...(editHref ? [{ type: "edit" as const, href: editHref }] : []),
+            ...(actionSlug
+              ? [
+                  {
+                    type: "pause" as const,
+                    actionPath: `/api/dashboard/negocios/${actionSlug}`,
+                    confirmMessage:
+                      "Pausar este negócio? Ele ficará arquivado e fora do portal.",
+                  },
+                  {
+                    type: "delete" as const,
+                    actionPath: `/api/dashboard/negocios/${actionSlug}`,
+                    confirmMessage: "Excluir permanentemente? Esta ação não pode ser desfeita.",
+                  },
+                ]
+              : []),
+          ],
+        };
+      });
     }
     case "restaurantes": {
       const itens = await listarRestaurantesAdmin();
