@@ -13,6 +13,31 @@ import {
 import { obterCamposCadastro, validarCamposObrigatorios } from "./cadastros";
 import { salvarRegistroDashboard } from "./dashboard-persistencia";
 
+const TABELA_POR_TIPO: Record<CadastroTipoId, string> = {
+  pacotes: "pacotes",
+  eventos: "eventos",
+  hoteis: "hoteis",
+  negocios: "negocios",
+  restaurantes: "restaurantes",
+};
+
+async function verificarSlugExistente(
+  tipo: CadastroTipoId,
+  slug: string
+): Promise<string | undefined> {
+  const supabase = createServerSupabaseClient();
+  const tabela = TABELA_POR_TIPO[tipo];
+  if (!tabela || !slug) return undefined;
+
+  const { data } = await supabase
+    .from(tabela)
+    .select("slug")
+    .eq("slug", slug)
+    .maybeSingle();
+
+  return data?.slug ?? undefined;
+}
+
 type ResultadoSolicitacaoPublica = {
   id: string;
 };
@@ -320,10 +345,18 @@ export async function executarAcaoSolicitacaoPublica({
       solicitacao.payload,
       valoresFormatados
     );
-    const resultado = await salvarRegistroDashboard(solicitacao.tipo, {
-      ...payloadPublicacao,
-      publicado: true,
-    });
+    const slugCandidata = asString(payloadPublicacao.slug);
+    const slugExistente = slugCandidata
+      ? await verificarSlugExistente(solicitacao.tipo, slugCandidata)
+      : undefined;
+    const resultado = await salvarRegistroDashboard(
+      solicitacao.tipo,
+      {
+        ...payloadPublicacao,
+        publicado: true,
+      },
+      slugExistente
+    );
     const slugPublicacao = resultado.slug ?? asString(payloadPublicacao.slug);
     const atualizado = await persistirSolicitacaoPublica(solicitacao, "publicado", {
       ...payloadPublicacao,
