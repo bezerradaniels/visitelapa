@@ -99,9 +99,10 @@ function parseMoeda(value: FormValues[string]) {
 
 function obterStatusPublicacao(
   values: FormValues,
-  fallback: StatusEditorial = "rascunho"
-) {
-  return asBoolean(values.publicado) ? "publicado" : fallback;
+  fallback?: StatusEditorial
+): StatusEditorial | undefined {
+  if (asBoolean(values.publicado)) return "publicado";
+  return fallback;
 }
 
 async function resolverPublicadoEmBlog(values: FormValues, slugAtual?: string) {
@@ -135,10 +136,15 @@ async function salvarRegistro(
   const supabase = createServerSupabaseClient();
   const { idAtual, slugAtual } = options;
 
+  // Remove campos undefined para não sobrescrever valores existentes no banco
+  const payloadLimpo = Object.fromEntries(
+    Object.entries(payload).filter(([, v]) => v !== undefined)
+  );
+
   if (idAtual) {
     const { error } = await supabase
       .from(tabela)
-      .update(payload)
+      .update(payloadLimpo)
       .eq("id", idAtual);
 
     if (error) {
@@ -155,7 +161,7 @@ async function salvarRegistro(
   if (slugAtual) {
     const { error } = await supabase
       .from(tabela)
-      .update(payload)
+      .update(payloadLimpo)
       .eq("slug", slugAtual);
 
     if (error) {
@@ -171,7 +177,7 @@ async function salvarRegistro(
 
   const { data, error } = await supabase
     .from(tabela)
-    .insert(payload)
+    .insert(payloadLimpo)
     .select("id, slug")
     .single();
 
@@ -184,7 +190,7 @@ async function salvarRegistro(
       "code" in error &&
       (error as { code: string }).code === "42501"
     ) {
-      const { error: insertError } = await supabase.from(tabela).insert(payload);
+      const { error: insertError } = await supabase.from(tabela).insert(payloadLimpo);
 
       if (insertError) {
         throw insertError;
@@ -322,7 +328,8 @@ export async function salvarRegistroDashboard(
       slugAtual,
       idAtual: options.idAtual,
     };
-    const statusFallback = options.statusFallback ?? "rascunho";
+    const isEdicao = Boolean(slugAtual || options.idAtual);
+    const statusFallback = options.statusFallback ?? (isEdicao ? undefined : "rascunho");
 
     switch (modulo) {
       case "pacotes":
