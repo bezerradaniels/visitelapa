@@ -128,7 +128,11 @@ export default async function EdicaoModuloPagina({
             />
 
             {!isNew && modulo !== "contatos" ? (
-              <AcoesEditoriais tituloItem={String(valoresFormulario.titulo ?? definicao.label)} />
+              <AcoesEditoriais
+                tituloItem={String(valoresFormulario.titulo ?? definicao.label)}
+                statusAtual={linha?.status}
+                actionPath={slug ? `/api/dashboard/${modulo}/${slug}` : undefined}
+              />
             ) : null}
 
             {imagem ? <BlocoMidia imagem={imagem} /> : null}

@@ -561,6 +561,23 @@ export async function pausarRegistroDashboard(modulo: DashboardModuloId, slug: s
   }
 }
 
+export async function atualizarStatusRegistro(modulo: DashboardModuloId, slug: string, status: string) {
+  const tabela = TABELA_POR_MODULO[modulo];
+  if (!tabela) {
+    throw new Error("Módulo não suporta esta operação.");
+  }
+
+  const supabase = createServerSupabaseClient();
+  const { error } = await supabase
+    .from(tabela)
+    .update({ status })
+    .eq("slug", slug);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+}
+
 export async function excluirRegistroDashboard(modulo: DashboardModuloId, slug: string) {
   const tabela = TABELA_POR_MODULO[modulo];
   if (!tabela) {
