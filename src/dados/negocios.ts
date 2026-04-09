@@ -15,6 +15,7 @@ export type Negocio = {
   especialidades: string[];
   diferenciais: string[];
   destaqueListagem: string;
+  galeria: import("@/tipos/plataforma").ImageFieldValue;
 };
 
 export const negocios: Negocio[] = [];

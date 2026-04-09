@@ -1,6 +1,7 @@
 import { Negocio } from "@/dados/negocios";
 import { supabase } from "@/lib/supabase";
 import { buscarRegistroAdminPorSlug, criarServico, listarRegistrosAdmin } from "./utils";
+import { normalizarGaleriaBlog } from "./blog-conteudo";
 
 export type NegocioAdminRow = {
   id?: string;
@@ -53,6 +54,7 @@ function mapRow(row: any): Negocio {
     especialidades,
     diferenciais,
     destaqueListagem: row.destaque_listagem || diferenciais[0] || especialidades[0] || row.categoria,
+    galeria: normalizarGaleriaBlog(row.galeria),
   };
 }
 

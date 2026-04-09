@@ -1203,6 +1203,7 @@ export async function obterValoresModulo(
         instagram: item?.instagram ?? seedBase.instagram,
         whatsappResponsavel: item?.contato ?? seedBase.whatsappResponsavel,
         nomeContato: (item as Record<string, unknown>)?.nome_contato as string ?? "",
+        galeria: normalizarGaleriaBlog((item as Record<string, unknown>)?.galeria),
         endereco: localizacaoNegocio.endereco,
         numero: localizacaoNegocio.numero,
         bairro: localizacaoNegocio.bairro,

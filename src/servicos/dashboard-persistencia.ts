@@ -354,6 +354,7 @@ export async function salvarRegistroDashboard(
             parcelas: asNumber(values.parcelas),
             comodidades: splitCommaSeparated(values.comodidades),
             valor_final_parcelado: parseMoeda(values.valorFinalParcelado),
+            galeria: normalizarGaleriaBlog(values.galeria),
             status: obterStatusPublicacao(values, statusFallback),
           },
           persistencia
@@ -378,6 +379,7 @@ export async function salvarRegistroDashboard(
             destaque_listagem: "",
             valor_ingresso: parseMoeda(values.valorIngresso),
             gratuito: asBoolean(values.eventoGratuito),
+            galeria: normalizarGaleriaBlog(values.galeria),
             status: obterStatusPublicacao(values, statusFallback),
           },
           persistencia
@@ -404,6 +406,7 @@ export async function salvarRegistroDashboard(
             diferenciais,
             destaque_listagem:
               diferenciais[0] ?? comodidades[0] ?? asString(values.categoria),
+            galeria: normalizarGaleriaBlog(values.galeria),
             status: obterStatusPublicacao(values, statusFallback),
           },
           persistencia
@@ -432,6 +435,7 @@ export async function salvarRegistroDashboard(
           especialidades,
           diferenciais,
           destaque_listagem: asString(values.subcategoria),
+          galeria: normalizarGaleriaBlog(values.galeria),
           status: obterStatusPublicacao(values, statusFallback),
         };
         return await salvarRegistro("negocios", payloadNegocios, persistencia);
@@ -455,6 +459,7 @@ export async function salvarRegistroDashboard(
           especialidades,
           diferenciais,
           destaque_listagem: especialidades[0] ?? asString(values.categoria),
+          galeria: normalizarGaleriaBlog(values.galeria),
           status: obterStatusPublicacao(values, statusFallback),
           logo: logoUrl || null,
         };

@@ -1,3 +1,4 @@
+import GaleriaPost from "@/componentes/blog/galeria-post";
 import BlocoContato from "@/componentes/dashboard/blocos-info/bloco-contato";
 import BlocoDestaques from "@/componentes/dashboard/blocos-info/bloco-destaques";
 import BlocoListaInformacoes from "@/componentes/dashboard/blocos-info/bloco-lista-informacoes";
@@ -105,6 +106,8 @@ export default async function NegocioDetalhePagina({
           itens={negocio.diferenciais}
         />
       </div>
+
+      <GaleriaPost imagens={negocio.galeria} />
 
       {relacionados.length > 0 ? (
         <div>
