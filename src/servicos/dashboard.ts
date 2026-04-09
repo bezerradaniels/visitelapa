@@ -1202,6 +1202,7 @@ export async function obterValoresModulo(
         whatsapp: item?.whatsapp ?? seedBase.whatsapp,
         instagram: item?.instagram ?? seedBase.instagram,
         whatsappResponsavel: item?.contato ?? seedBase.whatsappResponsavel,
+        nomeContato: (item as Record<string, unknown>)?.nome_contato as string ?? "",
         endereco: localizacaoNegocio.endereco,
         numero: localizacaoNegocio.numero,
         bairro: localizacaoNegocio.bairro,

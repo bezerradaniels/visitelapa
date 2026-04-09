@@ -136,38 +136,36 @@ async function salvarRegistro(
   const { idAtual, slugAtual } = options;
 
   if (idAtual) {
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from(tabela)
       .update(payload)
-      .eq("id", idAtual)
-      .select("id, slug")
-      .single();
+      .eq("id", idAtual);
 
     if (error) {
       throw error;
     }
 
+    const slugDoPayload = typeof payload.slug === "string" ? payload.slug : undefined;
     return {
-      id: String(data.id ?? data.slug),
-      slug: typeof data.slug === "string" ? data.slug : undefined,
+      id: idAtual,
+      slug: slugDoPayload,
     };
   }
 
   if (slugAtual) {
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from(tabela)
       .update(payload)
-      .eq("slug", slugAtual)
-      .select("id, slug")
-      .single();
+      .eq("slug", slugAtual);
 
     if (error) {
       throw error;
     }
 
+    const slugDoPayload = typeof payload.slug === "string" ? payload.slug : slugAtual;
     return {
-      id: String(data.id ?? data.slug),
-      slug: typeof data.slug === "string" ? data.slug : undefined,
+      id: slugDoPayload,
+      slug: slugDoPayload,
     };
   }
 
@@ -409,18 +407,21 @@ export async function salvarRegistroDashboard(
         const capaUrl = extrairPrimeiraImagem(values.capa) || logoUrl;
         const especialidades = splitCommaSeparated(values.especialidades);
         const diferenciais = splitCommaSeparated(values.diferenciais);
+
         const payloadNegocios: Record<string, unknown> = {
           slug: asString(values.slug),
           username: asString(values.username).toLowerCase(),
           categoria: asString(values.categoria),
           titulo: asString(values.titulo),
           descricao: asString(values.descricao),
-          imagem: capaUrl,
+          logo: logoUrl || null,
+          imagem: capaUrl || null,
           whatsapp: asString(values.whatsapp),
           instagram: asString(values.instagram),
           endereco: montarEndereco(values),
           atendimento: "",
-          contato: asString(values.whatsappResponsavel),
+          contato: asString(values.whatsappResponsavel) || asString(values.contato),
+          nome_contato: asString(values.nomeContato) || null,
           especialidades,
           diferenciais,
           destaque_listagem: asString(values.subcategoria),

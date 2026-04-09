@@ -25,12 +25,12 @@ export default function CardNegocioPlay({
       href={href}
       className="group flex h-full items-start gap-4 rounded-[28px] bg-white p-4 transition hover:-translate-y-1"
     >
-      <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-[22px] border border-gray-200 bg-gray-50 shadow-[0_10px_24px_-18px_rgba(15,23,42,0.45)]">
+      <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-[22px] border border-gray-200 bg-white shadow-[0_10px_24px_-18px_rgba(15,23,42,0.45)]">
         <img
           src={logoResolvendo}
           alt={`Logo de ${titulo}`}
           loading="lazy"
-          className="h-full w-full object-cover"
+          className="h-full w-full object-contain p-1"
         />
       </div>
 
